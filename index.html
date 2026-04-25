@@ -1,0 +1,185 @@
+ <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mi Catálogo</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .formulario {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+    }
+
+    .contenedor {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .producto {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      width: 250px;
+    }
+
+    .producto img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    button {
+      background: green;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .eliminar {
+      background: red;
+    }
+
+    .editar {
+      background: orange;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Mi Catálogo</h1>
+
+<div class="formulario">
+  <input type="text" id="nombre" placeholder="Nombre del producto">
+  <input type="number" id="precio" placeholder="Precio">
+  
+  <!-- NUEVO: selector de imagen -->
+  <input type="file" id="imagenInput" accept="image/*">
+  
+  <button onclick="guardarProducto()">Guardar producto</button>
+</div>
+
+<div class="contenedor" id="listaProductos"></div>
+
+<script>
+  let productos = JSON.parse(localStorage.getItem("productos")) || [];
+  let editandoIndex = null;
+
+  function guardarDatos() {
+    localStorage.setItem("productos", JSON.stringify(productos));
+  }
+
+  function guardarProducto() {
+    let nombre = document.getElementById("nombre").value;
+    let precio = document.getElementById("precio").value;
+    let file = document.getElementById("imagenInput").files[0];
+
+    if (!nombre || !precio || (!file && editandoIndex === null)) {
+      alert("Completa todos los campos");
+      return;
+    }
+
+    if (file) {
+      let reader = new FileReader();
+
+      reader.onload = function(e) {
+        let imagenBase64 = e.target.result;
+
+        if (editandoIndex === null) {
+          productos.push({ nombre, precio, imagen: imagenBase64 });
+        } else {
+          productos[editandoIndex] = { nombre, precio, imagen: imagenBase64 };
+          editandoIndex = null;
+        }
+
+        guardarDatos();
+        mostrarProductos();
+      };
+
+      reader.readAsDataURL(file);
+    } else {
+      // si edita sin cambiar imagen
+      productos[editandoIndex].nombre = nombre;
+      productos[editandoIndex].precio = precio;
+      editandoIndex = null;
+
+      guardarDatos();
+      mostrarProductos();
+    }
+
+    document.getElementById("nombre").value = "";
+    document.getElementById("precio").value = "";
+    document.getElementById("imagenInput").value = "";
+  }
+
+  function editarProducto(index) {
+    let p = productos[index];
+
+    document.getElementById("nombre").value = p.nombre;
+    document.getElementById("precio").value = p.precio;
+
+    editandoIndex = index;
+  }
+
+  function eliminarProducto(index) {
+    productos.splice(index, 1);
+    guardarDatos();
+    mostrarProductos();
+  }
+
+  function mostrarProductos() {
+    let contenedor = document.getElementById("listaProductos");
+    contenedor.innerHTML = "";
+
+    productos.forEach((p, i) => {
+      contenedor.innerHTML += `
+        <div class="producto">
+          <img src="${p.imagen}">
+          <h3>${p.nombre}</h3>
+          <p>Precio: $${p.precio}</p>
+          <button onclick="comprar('${p.nombre}', ${p.precio})">Comprar por WhatsApp</button>
+          <button class="editar" onclick="editarProducto(${i})">Editar</button>
+          <button class="eliminar" onclick="eliminarProducto(${i})">Eliminar</button>
+        </div>
+      `;
+    });
+  }
+
+  function comprar(nombre, precio) {
+    let mensaje = `Hola, quiero comprar ${nombre} por $${precio}`;
+    let url = `https://wa.me/573187446036?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, "_blank");
+  }
+
+  mostrarProductos();
+</script>
+
+</body>
+</html>
