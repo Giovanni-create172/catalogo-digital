@@ -5,11 +5,7 @@
   <title>Mi Catálogo</title>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #eef1f5;
-      margin: 0;
-    }
+    body { font-family: Arial; background: #eef1f5; margin: 0; }
 
     header {
       background: #0a66c2;
@@ -17,7 +13,6 @@
       padding: 15px;
       text-align: center;
       font-size: 22px;
-      font-weight: bold;
     }
 
     .formulario {
@@ -37,19 +32,19 @@
       padding: 10px;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
       color: white;
       width: 100%;
       margin-top: 5px;
+      cursor: pointer;
     }
 
-    .guardar { background: #28a745; }
-    .eliminar { background: #dc3545; }
+    .guardar { background: green; }
+    .eliminar { background: red; }
     .whatsapp { background: #25d366; }
 
     .contenedor {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
       gap: 15px;
       padding: 15px;
     }
@@ -68,24 +63,18 @@
       cursor: pointer;
     }
 
-    .info {
-      padding: 10px;
-    }
+    .info { padding: 10px; }
 
     .precio {
       color: #0a66c2;
       font-weight: bold;
-      font-size: 18px;
     }
 
-    /* MODAL */
     #modal {
       display: none;
       position: fixed;
       width: 100%;
       height: 100%;
-      top: 0;
-      left: 0;
       background: rgba(0,0,0,0.8);
       justify-content: center;
       align-items: center;
@@ -102,7 +91,7 @@
 
 <header>Mi Catálogo</header>
 
-<div class="formulario">
+<div class="formulario" id="adminPanel">
   <input type="text" id="nombre" placeholder="Nombre del producto">
   <input type="number" id="precio" placeholder="Precio">
   <input type="file" id="imagenInput" accept="image/*">
@@ -117,14 +106,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import {
-    getFirestore,
-    collection,
-    addDoc,
-    getDocs,
-    deleteDoc,
-    doc
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC23m8avf3Z",
@@ -139,17 +122,22 @@
   const db = getFirestore(app);
 
   const lista = document.getElementById("listaProductos");
-  const telefono = "573187446036"; // tu número
+  const telefono = "573187446036";
+
+  // 🔑 detectar modo admin
+  const params = new URLSearchParams(window.location.search);
+  const esAdmin = params.get("admin") === "1234";
+
+  if (!esAdmin) {
+    document.getElementById("adminPanel").style.display = "none";
+  }
 
   async function guardarProducto() {
     let nombre = document.getElementById("nombre").value;
     let precio = document.getElementById("precio").value;
     let file = document.getElementById("imagenInput").files[0];
 
-    if (!nombre || !precio || !file) {
-      alert("Completa todo");
-      return;
-    }
+    if (!nombre || !precio || !file) return alert("Completa todo");
 
     let reader = new FileReader();
 
@@ -188,12 +176,13 @@
           <div class="info">
             <h3>${p.nombre}</h3>
             <p class="precio">$${p.precio}</p>
-            <button class="whatsapp" onclick="window.open('https://wa.me/${telefono}?text=${mensaje}')">
+            <button class="whatsapp"
+              onclick="window.open('https://wa.me/${telefono}?text=${mensaje}')">
               Comprar por WhatsApp
             </button>
-            <button class="eliminar" onclick="eliminarProducto('${docu.id}')">
-              Eliminar
-            </button>
+
+            ${esAdmin ? `<button class="eliminar"
+              onclick="eliminarProducto('${docu.id}')">Eliminar</button>` : ""}
           </div>
         </div>
       `;
@@ -217,5 +206,7 @@
 </script>
 
 </body>
-</html>
+</html> 
+
+
  
