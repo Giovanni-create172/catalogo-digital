@@ -108,7 +108,6 @@ button {
 <body>
 
 <header>
-  <!-- 🔥 CAMBIA SOLO ESTA RUTA PARA TU LOGO -->
   <img src="logo.png" alt="logo">
   <h1>Encanto Ventas Pasto</h1>
 </header>
@@ -221,9 +220,6 @@ function mostrarProductos(listaFiltrada) {
   lista.innerHTML = "";
 
   listaFiltrada.forEach((p) => {
-    let mensaje = encodeURIComponent(
-      `Hola, quiero este producto: ${p.nombre} - $${p.precio}`
-    );
 
     lista.innerHTML += `
       <div class="producto">
@@ -234,7 +230,7 @@ function mostrarProductos(listaFiltrada) {
           <p class="categoria">${p.categoria}</p>
 
           <button class="whatsapp"
-            onclick="window.open('https://wa.me/${telefono}?text=${mensaje}')">
+            onclick="window.open('https://wa.me/${telefono}?text=' + encodeURIComponent('Hola, quiero comprar el producto: ' + '${p.nombre}' + ' por $' + '${p.precio}'))">
             Comprar por WhatsApp
           </button>
 
@@ -276,3 +272,5 @@ cargarProductos();
 
 </body>
 </html>
+
+
