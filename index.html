@@ -16,13 +16,12 @@ header{
   color:white;
   text-align:center;
   padding:15px;
-  font-weight:bold;
 }
 
 /* PRODUCTOS */
 .contenedor{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:15px;
   padding:15px;
 }
@@ -41,9 +40,7 @@ header{
   cursor:pointer;
 }
 
-.info{
-  padding:10px;
-}
+.info{padding:10px;}
 
 .precio{
   color:#b12704;
@@ -54,7 +51,7 @@ header{
 button{
   width:100%;
   padding:10px;
-  margin-top:6px;
+  margin-top:5px;
   border:none;
   border-radius:8px;
   cursor:pointer;
@@ -65,16 +62,16 @@ button{
 .wa{background:#25d366;color:white;}
 
 /* ADMIN */
-#adminPanel{
+#admin{
   display:none;
   background:white;
-  margin:15px;
-  padding:15px;
+  margin:10px;
+  padding:10px;
   border-radius:10px;
 }
 
 /* NEQUI */
-#nequiBox{
+#nequi{
   display:none;
   background:white;
   margin:10px;
@@ -93,9 +90,38 @@ button{
   padding:10px;
   border-radius:10px;
   display:none;
+  max-height:300px;
+  overflow:auto;
 }
 
-/* MODAL IMAGEN */
+/* BOTÓN CARRITO */
+#cartBtn{
+  position:fixed;
+  bottom:20px;
+  left:20px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  background:#f59e0b;
+  font-size:26px;
+}
+
+/* WHATSAPP */
+.wa-float{
+  position:fixed;
+  right:20px;
+  bottom:20px;
+  width:60px;
+  height:60px;
+  background:#25d366;
+  border-radius:50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:26px;
+}
+
+/* MODAL */
 #modal{
   display:none;
   position:fixed;
@@ -109,33 +135,6 @@ button{
 #modal img{
   max-width:90%;
   max-height:90%;
-  border-radius:10px;
-}
-
-/* BOTONES FLOTANTES */
-#cartBtn{
-  position:fixed;
-  bottom:20px;
-  left:20px;
-  width:60px;
-  height:60px;
-  border-radius:50%;
-  background:#f59e0b;
-  font-size:26px;
-}
-
-.flotante-wa{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  width:60px;
-  height:60px;
-  background:#25d366;
-  border-radius:50%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-size:26px;
 }
 </style>
 </head>
@@ -144,27 +143,26 @@ button{
 
 <header>Encanto Ventas Pasto</header>
 
-<!-- ADMIN PANEL -->
-<div id="adminPanel">
+<!-- ADMIN -->
+<div id="admin">
 
-  <h3>🛠 Admin</h3>
+  <h3>Panel Admin</h3>
 
   <input id="nombre" placeholder="Nombre">
   <input id="precio" placeholder="Precio">
 
-  <!-- 🔥 ESTO ES LO IMPORTANTE -->
-  <input type="file" id="imgFile">
+  <!-- ✔ SUBIDA DE IMAGEN REAL -->
+  <input type="file" id="img">
 
-  <button onclick="agregarProducto()" style="background:#111;color:white;">
-    Agregar producto
-  </button>
+  <button onclick="agregar()">Agregar producto</button>
 
-  <button onclick="mostrarNequi()">💳 Nequi</button>
+  <button onclick="mostrarNequi()">Ver Nequi</button>
+
 </div>
 
 <!-- NEQUI -->
-<div id="nequiBox">
-  <h3>💳 Nequi</h3>
+<div id="nequi">
+  <h3>Nequi</h3>
   <p>318 744 6036</p>
 </div>
 
@@ -177,11 +175,11 @@ button{
 <button id="cartBtn" onclick="toggleCarrito()">🛒</button>
 
 <!-- WHATSAPP -->
-<a class="flotante-wa" href="https://wa.me/573187446036">💬</a>
+<a class="wa-float" href="https://wa.me/573187446036">💬</a>
 
 <!-- MODAL IMAGEN -->
-<div id="modal" onclick="cerrarModal()">
-  <img id="imgGrande">
+<div id="modal" onclick="cerrar()">
+  <img id="imgBig">
 </div>
 
 <script>
@@ -189,15 +187,20 @@ button{
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
 let carrito = [];
 
-/* ADMIN SOLO SI ?admin=1234 */
-if(new URLSearchParams(location.search).get("admin") === "1234"){
-  document.getElementById("adminPanel").style.display = "block";
+/* ADMIN SOLO */
+if(new URLSearchParams(location.search).get("admin")==="1234"){
+  document.getElementById("admin").style.display="block";
 }
 
-/* AGREGAR PRODUCTO (CON IMAGEN REAL) */
-function agregarProducto(){
+/* AGREGAR PRODUCTO */
+function agregar(){
 
-  let file = document.getElementById("imgFile").files[0];
+  let file = document.getElementById("img").files[0];
+
+  if(!file){
+    alert("Selecciona imagen");
+    return;
+  }
 
   let reader = new FileReader();
 
@@ -209,7 +212,7 @@ function agregarProducto(){
       img:e.target.result
     });
 
-    localStorage.setItem("productos", JSON.stringify(productos));
+    localStorage.setItem("productos",JSON.stringify(productos));
     render();
   };
 
@@ -218,39 +221,66 @@ function agregarProducto(){
 
 /* NEQUI */
 function mostrarNequi(){
-  let b = document.getElementById("nequiBox");
-  b.style.display = (b.style.display === "block") ? "none" : "block";
+  let n = document.getElementById("nequi");
+  n.style.display = (n.style.display==="block")?"none":"block";
 }
 
 /* CARRITO */
 function agregarCarrito(i){
   carrito.push(productos[i]);
-}
-
-/* TOGGLE */
-function toggleCarrito(){
-  let c = document.getElementById("carrito");
-  c.style.display = (c.style.display === "block") ? "none" : "block";
   actualizar();
 }
 
-/* ACTUALIZAR CARRITO */
+/* CARRITO UI */
 function actualizar(){
+
   let c = document.getElementById("carrito");
-  c.innerHTML = "<h3>Carrito</h3>";
+  c.innerHTML="<h3>Carrito</h3>";
+
+  carrito.forEach((p,i)=>{
+    c.innerHTML += `
+      <div>
+        ${p.nombre} - $${p.precio}
+        <button onclick="eliminar(${i})">❌</button>
+      </div>
+    `;
+  });
+
+  c.innerHTML += `<button onclick="comprar()">Finalizar</button>`;
+}
+
+/* ELIMINAR */
+function eliminar(i){
+  carrito.splice(i,1);
+  actualizar();
+}
+
+/* COMPRA */
+function comprar(){
+
+  let total = 0;
 
   carrito.forEach(p=>{
-    c.innerHTML += `<div>${p.nombre} - $${p.precio}</div>`;
+    total += parseInt(p.precio);
   });
+
+  window.open("https://wa.me/573187446036?text=Total%20pedido:%20"+total);
 }
 
-/* ZOOM IMAGEN */
-function abrirModal(src){
+/* TOGGLE CARRITO */
+function toggleCarrito(){
+  let c = document.getElementById("carrito");
+  c.style.display = (c.style.display==="block")?"none":"block";
+  actualizar();
+}
+
+/* ZOOM */
+function ver(src){
   document.getElementById("modal").style.display="flex";
-  document.getElementById("imgGrande").src=src;
+  document.getElementById("imgBig").src=src;
 }
 
-function cerrarModal(){
+function cerrar(){
   document.getElementById("modal").style.display="none";
 }
 
@@ -258,16 +288,16 @@ function cerrarModal(){
 function render(){
 
   let cont = document.getElementById("lista");
-  cont.innerHTML = "";
+  cont.innerHTML="";
 
   productos.forEach((p,i)=>{
 
     cont.innerHTML += `
       <div class="producto">
-        <img src="${p.img}" onclick="abrirModal('${p.img}')">
+        <img src="${p.img}" onclick="ver('${p.img}')">
 
         <div class="info">
-          <h3>${p.nombre}</h3>
+          <b>${p.nombre}</b>
           <p class="precio">$${p.precio}</p>
 
           <button class="add" onclick="agregarCarrito(${i})">
@@ -275,7 +305,7 @@ function render(){
           </button>
 
           <button class="wa"
-          onclick="window.open('https://wa.me/573187446036?text=' + encodeURIComponent('Quiero: ${p.nombre}'))">
+          onclick="window.open('https://wa.me/573187446036?text='+encodeURIComponent('Quiero '+p.nombre))">
             WhatsApp
           </button>
         </div>
