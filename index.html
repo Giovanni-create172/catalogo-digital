@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -55,6 +55,7 @@ button {
 .guardar { background:green; }
 .eliminar { background:red; }
 .whatsapp { background:#25d366; }
+.carritoBtn { background:#ff9800; }
 
 .filtros {
   padding:10px;
@@ -79,221 +80,147 @@ button {
   width:100%;
   height:200px;
   object-fit:cover;
-  cursor:pointer;
 }
 
 .info { padding:10px; }
 
 .precio { color:#0a66c2; font-weight:bold; }
 
-.categoria { font-size:12px; color:gray; }
-
-#modal {
-  display:none;
-  position:fixed;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.8);
-  justify-content:center;
-  align-items:center;
+#carrito {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  background: white;
+  width: 260px;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 1000;
 }
 
-#modal img {
-  max-width:90%;
-  max-height:90%;
+.itemCarrito {
+  display:flex;
+  justify-content:space-between;
+  margin:5px 0;
+  font-size:14px;
 }
+
+.btnEliminar {
+  background:red;
+  color:white;
+  border:none;
+  border-radius:5px;
+  padding:2px 6px;
+  cursor:pointer;
+}
+
 </style>
 </head>
 
 <body>
 
 <header>
-  <img src="logo.png" alt="logo">
+  <img src="logo.png">
   <h1>Encanto Ventas Pasto</h1>
 </header>
 
-<div class="formulario" id="adminPanel">
-  <input type="text" id="nombre" placeholder="Nombre del producto">
-  <input type="number" id="precio" placeholder="Precio">
-
-  <select id="categoria">
-    <option value="">Seleccionar categoría</option>
-    <option>Ropa</option>
-    <option>Zapatos</option>
-    <option>Tecnología</option>
-    <option>Accesorios</option>
-  </select>
-
-  <input type="file" id="imagenInput" accept="image/*">
-  <button class="guardar" onclick="guardarProducto()">Guardar producto</button>
-</div>
-
-<div class="filtros">
-  <select id="filtroCategoria" onchange="filtrarProductos()">
-    <option value="">Todas las categorías</option>
-    <option>Ropa</option>
-    <option>Zapatos</option>
-    <option>Tecnología</option>
-    <option>Accesorios</option>
-  </select>
-</div>
-
 <div class="contenedor" id="listaProductos"></div>
 
-<div id="modal">
-  <img id="imagenGrande">
+<!-- carrito -->
+<div id="carrito">
+  <h3>Carrito</h3>
+  <div id="itemsCarrito"></div>
+  <p id="total"></p>
+  <button class="whatsapp" onclick="enviarPedido()">Enviar pedido</button>
 </div>
 
-<!-- 🔥 BOTÓN FLOTANTE WHATSAPP -->
-<a href="https://wa.me/573187446036?text=Hola%20quiero%20información%20de%20los%20productos"
-   target="_blank"
-   style="
-   position: fixed;
-   bottom: 20px;
-   right: 20px;
-   background: #25d366;
-   color: white;
-   width: 60px;
-   height: 60px;
-   border-radius: 50%;
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   font-size: 30px;
-   text-decoration: none;
-   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-   z-index: 999;">
-   💬
+<!-- botón carrito -->
+<button onclick="toggleCarrito()"
+style="position:fixed;bottom:20px;left:20px;width:60px;height:60px;border-radius:50%;background:#ff9800;">
+🛒
+</button>
+
+<!-- botón whatsapp -->
+<a href="https://wa.me/573187446036?text=Hola"
+style="position:fixed;bottom:20px;right:20px;width:60px;height:60px;background:#25d366;color:white;border-radius:50%;display:flex;justify-content:center;align-items:center;text-decoration:none;font-size:30px;">
+💬
 </a>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script>
+let carrito = [];
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC23m8avf3Z",
-  authDomain: "catalogo-digital-4a956.firebaseapp.com",
-  projectId: "catalogo-digital-4a956",
-  storageBucket: "catalogo-digital-4a956.firebasestorage.app",
-  messagingSenderId: "78408824293",
-  appId: "1:78408824293:web:4aafa762fc4e9e5267eb0c"
-};
+let productos = [
+  {nombre:"Producto demo", precio:10000},
+  {nombre:"Producto 2", precio:20000}
+];
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+function mostrar() {
+  let cont = document.getElementById("listaProductos");
+  cont.innerHTML = "";
 
-const lista = document.getElementById("listaProductos");
-const telefono = "573187446036";
-
-let todosProductos = [];
-
-const params = new URLSearchParams(window.location.search);
-const esAdmin = params.get("admin") === "1234";
-
-if (!esAdmin) {
-  document.getElementById("adminPanel").style.display = "none";
-}
-
-async function guardarProducto() {
-  let nombre = document.getElementById("nombre").value;
-  let precio = document.getElementById("precio").value;
-  let categoria = document.getElementById("categoria").value;
-  let file = document.getElementById("imagenInput").files[0];
-
-  if (!nombre || !precio || !categoria || !file) {
-    alert("Completa todo");
-    return;
-  }
-
-  let reader = new FileReader();
-
-  reader.onload = async function(e) {
-    await addDoc(collection(db, "productos"), {
-      nombre,
-      precio,
-      categoria,
-      imagen: e.target.result
-    });
-
-    cargarProductos();
-  };
-
-  reader.readAsDataURL(file);
-}
-
-async function eliminarProducto(id) {
-  await deleteDoc(doc(db, "productos", id));
-  cargarProductos();
-}
-
-async function cargarProductos() {
-  todosProductos = [];
-  const datos = await getDocs(collection(db, "productos"));
-
-  datos.forEach((docu) => {
-    todosProductos.push({ id: docu.id, ...docu.data() });
-  });
-
-  mostrarProductos(todosProductos);
-}
-
-function mostrarProductos(listaFiltrada) {
-  lista.innerHTML = "";
-
-  listaFiltrada.forEach((p) => {
-
-    let mensaje = encodeURIComponent(
-      `Hola, quiero este producto: ${p.nombre} - $${p.precio}`
-    );
-
-    lista.innerHTML += `
+  productos.forEach((p, i) => {
+    cont.innerHTML += `
       <div class="producto">
-        <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
         <div class="info">
           <h3>${p.nombre}</h3>
           <p class="precio">$${p.precio}</p>
-          <p class="categoria">${p.categoria}</p>
 
-          <button class="whatsapp"
-            onclick="window.open('https://wa.me/${telefono}?text=${mensaje}')">
-            Comprar por WhatsApp
+          <button onclick="agregar('${p.nombre}', ${p.precio})"
+          class="whatsapp">
+          Agregar al carrito
           </button>
-
-          ${esAdmin ? `<button class="eliminar"
-            onclick="eliminarProducto('${p.id}')">Eliminar</button>` : ""}
         </div>
       </div>
     `;
   });
 }
 
-function filtrarProductos() {
-  let categoria = document.getElementById("filtroCategoria").value;
-
-  if (!categoria) {
-    mostrarProductos(todosProductos);
-  } else {
-    let filtrados = todosProductos.filter(p => p.categoria === categoria);
-    mostrarProductos(filtrados);
-  }
+function agregar(nombre, precio) {
+  carrito.push({nombre, precio});
+  actualizar();
 }
 
-function verImagen(src) {
-  document.getElementById("modal").style.display = "flex";
-  document.getElementById("imagenGrande").src = src;
+function eliminar(index) {
+  carrito.splice(index, 1);
+  actualizar();
 }
 
-document.getElementById("modal").onclick = () => {
-  document.getElementById("modal").style.display = "none";
-};
+function actualizar() {
+  let cont = document.getElementById("itemsCarrito");
+  let total = 0;
 
-window.guardarProducto = guardarProducto;
-window.eliminarProducto = eliminarProducto;
-window.verImagen = verImagen;
-window.filtrarProductos = filtrarProductos;
+  cont.innerHTML = "";
 
-cargarProductos();
+  carrito.forEach((p, i) => {
+    total += p.precio;
+
+    cont.innerHTML += `
+      <div class="itemCarrito">
+        <span>${p.nombre} - $${p.precio}</span>
+        <button class="btnEliminar" onclick="eliminar(${i})">X</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("total").innerText = "Total: $" + total;
+}
+
+function toggleCarrito() {
+  let c = document.getElementById("carrito");
+  c.style.display = c.style.display === "block" ? "none" : "block";
+}
+
+function enviarPedido() {
+  let texto = "Hola quiero comprar:\n";
+  carrito.forEach(p => {
+    texto += `- ${p.nombre} $${p.precio}\n`;
+  });
+
+  window.open("https://wa.me/573187446036?text=" + encodeURIComponent(texto));
+}
+
+mostrar();
 </script>
 
 </body>
