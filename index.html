@@ -17,15 +17,10 @@ header {
   color:white;
   text-align:center;
   padding:10px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
 }
 
 header img {
   width:40px;
-  height:40px;
   border-radius:50%;
 }
 
@@ -79,19 +74,12 @@ button {
   margin-top:5px;
   border:none;
   border-radius:5px;
-  cursor:pointer;
 }
 
-.add {
-  background:#ff9900;
-}
+.add { background:#ff9900; }
+.wa { background:#25d366; color:white; }
 
-.wa {
-  background:#25d366;
-  color:white;
-}
-
-/* CARRITO */
+/* CARRITO (simple base) */
 #carrito {
   position:fixed;
   right:20px;
@@ -100,27 +88,9 @@ button {
   background:white;
   padding:10px;
   border-radius:10px;
-  box-shadow:0 0 10px rgba(0,0,0,0.3);
   display:none;
-  z-index:1000;
 }
 
-.item {
-  display:flex;
-  justify-content:space-between;
-  font-size:13px;
-  margin:5px 0;
-}
-
-.eliminar {
-  background:red;
-  color:white;
-  border:none;
-  padding:2px 6px;
-  border-radius:5px;
-}
-
-/* BOTÓN CARRITO */
 #cartBtn {
   position:fixed;
   bottom:20px;
@@ -133,22 +103,6 @@ button {
   border:none;
 }
 
-#badge {
-  position:absolute;
-  top:-5px;
-  right:-5px;
-  background:red;
-  color:white;
-  width:20px;
-  height:20px;
-  border-radius:50%;
-  font-size:12px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-/* WHATSAPP FLOTANTE */
 .flotante-wa {
   position:fixed;
   bottom:20px;
@@ -161,9 +115,8 @@ button {
   display:flex;
   justify-content:center;
   align-items:center;
-  font-size:28px;
   text-decoration:none;
-  z-index:999;
+  font-size:28px;
 }
 </style>
 </head>
@@ -175,12 +128,30 @@ button {
   <h1>Encanto Ventas Pasto</h1>
 </header>
 
-<!-- BUSCADOR + FILTRO -->
+<!-- ADMIN PANEL (oculto) -->
+<div id="adminPanel" style="display:none; padding:10px; background:#fff;">
+  <h3>Panel Admin</h3>
+
+  <input id="nombre" placeholder="Nombre">
+  <input id="precio" placeholder="Precio">
+  <input id="img" placeholder="URL imagen">
+
+  <select id="categoria">
+    <option>Ropa</option>
+    <option>Zapatos</option>
+    <option>Tecnología</option>
+    <option>Accesorios</option>
+  </select>
+
+  <button onclick="agregarProducto()">Agregar producto</button>
+</div>
+
+<!-- BUSCADOR -->
 <div class="busqueda">
-  <input type="text" id="search" placeholder="Buscar productos..." onkeyup="render()">
+  <input type="text" id="search" placeholder="Buscar..." onkeyup="render()">
 
   <select id="filtro" onchange="render()">
-    <option value="">Todas las categorías</option>
+    <option value="">Todas</option>
     <option>Ropa</option>
     <option>Zapatos</option>
     <option>Tecnología</option>
@@ -191,39 +162,41 @@ button {
 <!-- PRODUCTOS -->
 <div class="contenedor" id="lista"></div>
 
-<!-- CARRITO -->
-<div id="carrito">
-  <h3>Carrito</h3>
-  <div id="items"></div>
-  <p id="total"></p>
-  <button class="wa" onclick="enviar()">Enviar pedido</button>
-</div>
-
-<!-- BOTÓN CARRITO -->
-<button id="cartBtn" onclick="toggleCarrito()">🛒
-<span id="badge">0</span>
-</button>
-
-<!-- WHATSAPP FLOTANTE -->
+<!-- WHATSAPP -->
 <a class="flotante-wa"
 href="https://wa.me/573187446036"
 target="_blank">💬</a>
 
 <script>
 
-let carrito = [];
-let productos = [];
+let productos = [
+  {nombre:"Zapatos Nike", precio:120000, img:"img/zapatos.jpg", categoria:"Zapatos"},
+  {nombre:"Camisa Polo", precio:60000, img:"img/camisa.jpg", categoria:"Ropa"}
+];
 
-/* CARGAR DESDE GITHUB */
-fetch("productos.json")
-.then(res => res.json())
-.then(data => {
-  productos = data;
+/* ADMIN DETECCIÓN */
+const params = new URLSearchParams(window.location.search);
+const esAdmin = params.get("admin") === "1234";
+
+if(esAdmin){
+  document.getElementById("adminPanel").style.display = "block";
+}
+
+/* AGREGAR PRODUCTO */
+function agregarProducto(){
+
+  let nombre = document.getElementById("nombre").value;
+  let precio = document.getElementById("precio").value;
+  let img = document.getElementById("img").value;
+  let categoria = document.getElementById("categoria").value;
+
+  productos.push({nombre, precio, img, categoria});
+
   render();
-});
+}
 
 /* RENDER */
-function render() {
+function render(){
 
   let cont = document.getElementById("lista");
   let search = document.getElementById("search").value.toLowerCase();
@@ -236,87 +209,28 @@ function render() {
     p.nombre.toLowerCase().includes(search) &&
     (filtro === "" || p.categoria === filtro)
   )
-  .forEach((p,i)=>{
+  .forEach(p=>{
 
     cont.innerHTML += `
       <div class="producto">
         <img src="${p.img}">
-
         <div class="info">
           <h3>${p.nombre}</h3>
           <p class="precio">$${p.precio}</p>
 
-          <button class="add" onclick="agregar(${i})">
-            Agregar al carrito
-          </button>
+          <button class="add">Agregar</button>
 
           <button class="wa"
-          onclick="window.open('https://wa.me/573187446036?text=' + encodeURIComponent('Hola quiero: ${p.nombre} por $${p.precio}'))">
+          onclick="window.open('https://wa.me/573187446036?text=' + encodeURIComponent('Quiero: ${p.nombre}'))">
             WhatsApp
           </button>
-
         </div>
       </div>
     `;
   });
 }
 
-/* CARRITO */
-function agregar(i) {
-  carrito.push({
-    nombre: productos[i].nombre,
-    precio: productos[i].precio,
-    cantidad: 1
-  });
-
-  actualizar();
-}
-
-function eliminar(i) {
-  carrito.splice(i,1);
-  actualizar();
-}
-
-function actualizar() {
-
-  let cont = document.getElementById("items");
-  let total = 0;
-  let count = 0;
-
-  cont.innerHTML = "";
-
-  carrito.forEach((p,i)=>{
-    total += p.precio * p.cantidad;
-    count += 1;
-
-    cont.innerHTML += `
-      <div class="item">
-        ${p.nombre}
-        <button class="eliminar" onclick="eliminar(${i})">X</button>
-      </div>
-    `;
-  });
-
-  document.getElementById("total").innerText = "Total: $" + total;
-  document.getElementById("badge").innerText = count;
-}
-
-/* CARRITO TOGGLE */
-function toggleCarrito() {
-  let c = document.getElementById("carrito");
-  c.style.display = c.style.display === "block" ? "none" : "block";
-}
-
-/* ENVIAR WHATSAPP */
-function enviar() {
-  let texto = "Hola quiero comprar:\n";
-
-  carrito.forEach(p=>{
-    texto += `- ${p.nombre} $${p.precio}\n`;
-  });
-
-  window.open("https://wa.me/573187446036?text="+encodeURIComponent(texto));
-}
+render();
 
 </script>
 
