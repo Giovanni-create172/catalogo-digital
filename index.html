@@ -51,7 +51,9 @@ header{
   object-fit:cover;
 }
 
-.info{padding:10px;}
+.info{
+  padding:10px;
+}
 
 .precio{color:#b12704;font-weight:bold;}
 
@@ -77,12 +79,6 @@ button{
   border-radius:10px;
 }
 
-.admin-item{
-  display:flex;
-  justify-content:space-between;
-  margin:5px 0;
-}
-
 /* CARRITO */
 #carrito{
   position:fixed;
@@ -91,6 +87,7 @@ button{
   width:250px;
   background:white;
   padding:10px;
+  border-radius:10px;
 }
 
 /* BOTÓN */
@@ -105,15 +102,17 @@ button{
   font-size:24px;
 }
 
-/* WHATSAPP */
-.flotante-wa{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  width:60px;
-  height:60px;
-  background:#25d366;
-  border-radius:50%;
+/* EXPORT / IMPORT */
+.tools{
+  text-align:center;
+  margin:10px;
+}
+
+.tools button{
+  width:80%;
+  margin:5px;
+  background:#444;
+  color:white;
 }
 </style>
 </head>
@@ -127,11 +126,7 @@ button{
 <!-- ADMIN -->
 <div id="adminPanel">
 
-  <h3>Admin</h3>
-
-  <button onclick="verPedidos()">Ver pedidos</button>
-
-  <hr>
+  <h3>Panel Admin</h3>
 
   <input id="nombre" placeholder="Nombre">
   <input id="precio" placeholder="Precio">
@@ -140,9 +135,14 @@ button{
 
   <button onclick="agregarProducto()">Agregar</button>
 
-  <div id="listaAdmin"></div>
+  <hr>
 
-  <div id="pedidos"></div>
+  <div class="tools">
+    <button onclick="exportarCatalogo()">📤 Exportar catálogo</button>
+    <input type="file" onchange="importarCatalogo(event)">
+  </div>
+
+  <div id="listaAdmin"></div>
 </div>
 
 <!-- BUSCADOR -->
@@ -157,21 +157,15 @@ button{
 <div id="carrito">
   <div id="listaCarrito"></div>
   <p id="total"></p>
-
-  <button onclick="finalizarCompra()" style="background:#25d366;color:white;">
-    Finalizar compra
-  </button>
 </div>
 
 <button id="cartBtn" onclick="toggleCarrito()">🛒</button>
 
-<a class="flotante-wa" href="https://wa.me/573187446036"></a>
-
 <script>
 
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
+
 let carrito = [];
-let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
 
 /* ADMIN */
 const esAdmin = new URLSearchParams(window.location.search).get("admin") === "1234";
@@ -182,22 +176,47 @@ function guardar(){
   localStorage.setItem("productos", JSON.stringify(productos));
 }
 
-/* PEDIDOS */
-function guardarPedidos(){
-  localStorage.setItem("pedidos", JSON.stringify(pedidos));
-}
-
 /* AGREGAR */
 function agregarProducto(){
   productos.push({
     nombre:nombre.value,
     precio:precio.value,
     img:img.value,
-    stock:parseInt(stock.value)
+    stock:parseInt(stock.value || 1)
   });
 
   guardar();
   render();
+}
+
+/* EXPORTAR */
+function exportarCatalogo(){
+
+  let data = JSON.stringify(productos);
+
+  let blob = new Blob([data], {type:"application/json"});
+  let url = URL.createObjectURL(blob);
+
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = "catalogo.json";
+  a.click();
+}
+
+/* IMPORTAR */
+function importarCatalogo(e){
+
+  let file = e.target.files[0];
+  let reader = new FileReader();
+
+  reader.onload = function(event){
+
+    productos = JSON.parse(event.target.result);
+    guardar();
+    render();
+  };
+
+  reader.readAsText(file);
 }
 
 /* CARRITO */
@@ -210,51 +229,24 @@ function agregarCarrito(i){
     return;
   }
 
-  carrito.push({...p, cantidad:1});
-  p.stock--;
+  carrito.push(p);
 
-  actualizar();
+  p.stock--;
+  guardar();
+
+  render();
 }
 
-/* FINALIZAR */
-function finalizarCompra(){
+/* WHATSAPP */
+function enviarWhatsApp(){
 
-  if(carrito.length === 0) return;
-
-  let nombreCliente = prompt("Nombre:");
-
-  let total = 0;
-  let mensaje = "🧾 PEDIDO%0A";
+  let mensaje = "Pedido%0A";
 
   carrito.forEach(p=>{
-    total += p.precio;
     mensaje += p.nombre + "%0A";
   });
 
-  pedidos.push({
-    cliente:nombreCliente,
-    total:total,
-    fecha:new Date().toLocaleString()
-  });
-
-  guardarPedidos();
-
   window.open("https://wa.me/573187446036?text=" + mensaje);
-}
-
-/* VER PEDIDOS */
-function verPedidos(){
-
-  let div = document.getElementById("pedidos");
-  div.innerHTML = "<h4>Pedidos</h4>";
-
-  pedidos.forEach(p=>{
-    div.innerHTML += `
-      <div>
-        ${p.cliente} - $${p.total} - ${p.fecha}
-      </div>
-    `;
-  });
 }
 
 /* RENDER */
@@ -281,17 +273,9 @@ function render(){
   });
 }
 
-/* ACTUALIZAR */
-function actualizar(){
-  render();
-}
-
 render();
 
 </script>
 
 </body>
 </html>
-
-
-
