@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Mi Catálogo</title>
+<title>Encanto Ventas Pasto</title>
 
 <style>
 body { font-family: Arial; background:#eef1f5; margin:0; }
@@ -10,9 +10,23 @@ body { font-family: Arial; background:#eef1f5; margin:0; }
 header {
   background:#0a66c2;
   color:white;
-  padding:15px;
-  text-align:center;
-  font-size:22px;
+  padding:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+header img {
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+header h1 {
+  font-size:20px;
+  margin:0;
 }
 
 .formulario {
@@ -70,15 +84,9 @@ button {
 
 .info { padding:10px; }
 
-.precio {
-  color:#0a66c2;
-  font-weight:bold;
-}
+.precio { color:#0a66c2; font-weight:bold; }
 
-.categoria {
-  font-size:12px;
-  color:gray;
-}
+.categoria { font-size:12px; color:gray; }
 
 #modal {
   display:none;
@@ -99,7 +107,11 @@ button {
 
 <body>
 
-<header>Mi Catálogo</header>
+<header>
+  <!-- 🔥 CAMBIA SOLO ESTA RUTA PARA TU LOGO -->
+  <img src="c:\Users\ALMACEN\Desktop\logo.png.png" alt="logo">
+  <h1>Encanto Ventas Pasto</h1>
+</header>
 
 <div class="formulario" id="adminPanel">
   <input type="text" id="nombre" placeholder="Nombre del producto">
