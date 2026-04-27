@@ -11,25 +11,22 @@ body{
   background:#f4f6f8;
 }
 
-/* HEADER */
 header{
   background:#111827;
   color:white;
   text-align:center;
   padding:15px;
-  font-size:18px;
   font-weight:bold;
 }
 
-/* CONTENEDOR */
+/* PRODUCTOS */
 .contenedor{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
-  gap:18px;
-  padding:18px;
+  gap:15px;
+  padding:15px;
 }
 
-/* PRODUCTO */
 .producto{
   background:white;
   border-radius:12px;
@@ -41,25 +38,16 @@ header{
   width:100%;
   height:200px;
   object-fit:cover;
+  cursor:pointer;
 }
 
 .info{
-  padding:12px;
-}
-
-.titulo{
-  font-weight:bold;
+  padding:10px;
 }
 
 .precio{
   color:#b12704;
-  font-size:18px;
   font-weight:bold;
-}
-
-.stock{
-  font-size:12px;
-  color:gray;
 }
 
 /* BOTONES */
@@ -73,13 +61,26 @@ button{
   font-weight:bold;
 }
 
-.add{
-  background:#f59e0b;
+.add{background:#f59e0b;}
+.wa{background:#25d366;color:white;}
+
+/* ADMIN */
+#adminPanel{
+  display:none;
+  background:white;
+  margin:15px;
+  padding:15px;
+  border-radius:10px;
 }
 
-.wa{
-  background:#25d366;
-  color:white;
+/* NEQUI */
+#nequiBox{
+  display:none;
+  background:white;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
 }
 
 /* CARRITO */
@@ -87,17 +88,31 @@ button{
   position:fixed;
   right:20px;
   bottom:90px;
-  width:300px;
+  width:280px;
   background:white;
-  padding:12px;
-  border-radius:12px;
-  box-shadow:0 6px 20px rgba(0,0,0,0.2);
+  padding:10px;
+  border-radius:10px;
   display:none;
-  max-height:400px;
-  overflow:auto;
 }
 
-/* BOTÓN CARRITO */
+/* MODAL IMAGEN */
+#modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.8);
+  justify-content:center;
+  align-items:center;
+}
+
+#modal img{
+  max-width:90%;
+  max-height:90%;
+  border-radius:10px;
+}
+
+/* BOTONES FLOTANTES */
 #cartBtn{
   position:fixed;
   bottom:20px;
@@ -109,189 +124,134 @@ button{
   font-size:26px;
 }
 
-/* ADMIN */
-#admin{
-  background:white;
-  margin:15px;
-  padding:15px;
-  border-radius:12px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
-
-/* HISTORIAL */
-#historial{
-  margin:15px;
-  background:white;
-  padding:15px;
-  border-radius:12px;
-  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+.flotante-wa{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:60px;
+  height:60px;
+  background:#25d366;
+  border-radius:50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:26px;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  Encanto Ventas Pasto
-</header>
+<header>Encanto Ventas Pasto</header>
 
 <!-- ADMIN PANEL -->
-<div id="admin">
+<div id="adminPanel">
 
-  <h3>🛠 Panel Admin</h3>
+  <h3>🛠 Admin</h3>
 
   <input id="nombre" placeholder="Nombre">
   <input id="precio" placeholder="Precio">
-  <input id="img" placeholder="Imagen URL">
-  <input id="stock" placeholder="Stock">
+
+  <!-- 🔥 ESTO ES LO IMPORTANTE -->
+  <input type="file" id="imgFile">
 
   <button onclick="agregarProducto()" style="background:#111;color:white;">
     Agregar producto
   </button>
 
-  <button onclick="verHistorial()" style="background:#25d366;color:white;">
-    Ver pedidos
-  </button>
+  <button onclick="mostrarNequi()">💳 Nequi</button>
+</div>
 
+<!-- NEQUI -->
+<div id="nequiBox">
+  <h3>💳 Nequi</h3>
+  <p>318 744 6036</p>
 </div>
 
 <!-- PRODUCTOS -->
 <div class="contenedor" id="lista"></div>
 
 <!-- CARRITO -->
-<div id="carrito">
-  <div id="listaCarrito"></div>
-  <p id="total"></p>
-
-  <button onclick="finalizar()" style="background:#25d366;color:white;">
-    Finalizar compra
-  </button>
-</div>
+<div id="carrito"></div>
 
 <button id="cartBtn" onclick="toggleCarrito()">🛒</button>
 
-<!-- HISTORIAL -->
-<div id="historial" style="display:none;"></div>
+<!-- WHATSAPP -->
+<a class="flotante-wa" href="https://wa.me/573187446036">💬</a>
+
+<!-- MODAL IMAGEN -->
+<div id="modal" onclick="cerrarModal()">
+  <img id="imgGrande">
+</div>
 
 <script>
 
-/* PRODUCTOS */
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
-
-/* CARRITO */
 let carrito = [];
 
-/* PEDIDOS */
-let pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-
-/* GUARDAR */
-function guardar(){
-  localStorage.setItem("productos", JSON.stringify(productos));
-  localStorage.setItem("pedidos", JSON.stringify(pedidos));
+/* ADMIN SOLO SI ?admin=1234 */
+if(new URLSearchParams(location.search).get("admin") === "1234"){
+  document.getElementById("adminPanel").style.display = "block";
 }
 
-/* AGREGAR PRODUCTO */
+/* AGREGAR PRODUCTO (CON IMAGEN REAL) */
 function agregarProducto(){
 
-  productos.push({
-    nombre:nombre.value,
-    precio:parseInt(precio.value),
-    img:img.value,
-    stock:parseInt(stock.value)
-  });
+  let file = document.getElementById("imgFile").files[0];
 
-  guardar();
-  render();
+  let reader = new FileReader();
+
+  reader.onload = function(e){
+
+    productos.push({
+      nombre:nombre.value,
+      precio:precio.value,
+      img:e.target.result
+    });
+
+    localStorage.setItem("productos", JSON.stringify(productos));
+    render();
+  };
+
+  reader.readAsDataURL(file);
 }
 
-/* AGREGAR AL CARRITO (CON STOCK) */
-function agregarCarrito(i){
-
-  if(productos[i].stock <= 0){
-    alert("Sin stock");
-    return;
-  }
-
-  productos[i].stock--;
-
-  let p = productos[i];
-
-  let existe = carrito.find(x => x.nombre === p.nombre);
-
-  if(existe){
-    existe.cantidad++;
-  }else{
-    carrito.push({...p, cantidad:1});
-  }
-
-  actualizarCarrito();
-  guardar();
+/* NEQUI */
+function mostrarNequi(){
+  let b = document.getElementById("nequiBox");
+  b.style.display = (b.style.display === "block") ? "none" : "block";
 }
 
 /* CARRITO */
-function actualizarCarrito(){
-
-  let cont = document.getElementById("listaCarrito");
-  cont.innerHTML = "";
-
-  let total = 0;
-
-  carrito.forEach(p=>{
-    total += p.precio * p.cantidad;
-
-    cont.innerHTML += `
-      <div style="border-bottom:1px solid #eee;padding:5px;">
-        ${p.nombre} x${p.cantidad}
-      </div>
-    `;
-  });
-
-  document.getElementById("total").innerText = "Total: $" + total;
-}
-
-/* FINALIZAR COMPRA */
-function finalizar(){
-
-  let nombreCliente = prompt("Nombre cliente:");
-  if(!nombreCliente) return;
-
-  let total = 0;
-
-  carrito.forEach(p=>{
-    total += p.precio * p.cantidad;
-  });
-
-  pedidos.push({
-    cliente:nombreCliente,
-    total:total,
-    fecha:new Date().toLocaleString()
-  });
-
-  guardar();
-
-  window.open("https://wa.me/573187446036?text=Pedido%20total:%20" + total);
-}
-
-/* HISTORIAL */
-function verHistorial(){
-
-  let h = document.getElementById("historial");
-  h.style.display = "block";
-  h.innerHTML = "<h3>📦 Pedidos</h3>";
-
-  pedidos.forEach(p=>{
-    h.innerHTML += `
-      <div>
-        👤 ${p.cliente} - 💰 $${p.total} - 📅 ${p.fecha}
-      </div>
-    `;
-  });
+function agregarCarrito(i){
+  carrito.push(productos[i]);
 }
 
 /* TOGGLE */
 function toggleCarrito(){
   let c = document.getElementById("carrito");
   c.style.display = (c.style.display === "block") ? "none" : "block";
+  actualizar();
+}
+
+/* ACTUALIZAR CARRITO */
+function actualizar(){
+  let c = document.getElementById("carrito");
+  c.innerHTML = "<h3>Carrito</h3>";
+
+  carrito.forEach(p=>{
+    c.innerHTML += `<div>${p.nombre} - $${p.precio}</div>`;
+  });
+}
+
+/* ZOOM IMAGEN */
+function abrirModal(src){
+  document.getElementById("modal").style.display="flex";
+  document.getElementById("imgGrande").src=src;
+}
+
+function cerrarModal(){
+  document.getElementById("modal").style.display="none";
 }
 
 /* RENDER */
@@ -304,11 +264,11 @@ function render(){
 
     cont.innerHTML += `
       <div class="producto">
-        <img src="${p.img}">
+        <img src="${p.img}" onclick="abrirModal('${p.img}')">
+
         <div class="info">
-          <div class="titulo">${p.nombre}</div>
-          <div class="precio">$${p.precio}</div>
-          <div class="stock">Stock: ${p.stock}</div>
+          <h3>${p.nombre}</h3>
+          <p class="precio">$${p.precio}</p>
 
           <button class="add" onclick="agregarCarrito(${i})">
             Agregar
