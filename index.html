@@ -16,6 +16,25 @@ header{
   color:white;
   text-align:center;
   padding:15px;
+  font-weight:bold;
+}
+
+/* ADMIN */
+#admin{
+  display:none;
+  background:white;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+}
+
+/* NEQUI */
+#nequi{
+  background:white;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
 }
 
 /* PRODUCTOS */
@@ -61,25 +80,6 @@ button{
 .add{background:#f59e0b;}
 .wa{background:#25d366;color:white;}
 
-/* ADMIN */
-#admin{
-  display:none;
-  background:white;
-  margin:10px;
-  padding:10px;
-  border-radius:10px;
-}
-
-/* NEQUI */
-#nequi{
-  display:none;
-  background:white;
-  margin:10px;
-  padding:10px;
-  border-radius:10px;
-  text-align:center;
-}
-
 /* CARRITO */
 #carrito{
   position:fixed;
@@ -90,7 +90,7 @@ button{
   padding:10px;
   border-radius:10px;
   display:none;
-  max-height:300px;
+  max-height:350px;
   overflow:auto;
 }
 
@@ -107,7 +107,7 @@ button{
 }
 
 /* WHATSAPP */
-.wa-float{
+.wa{
   position:fixed;
   right:20px;
   bottom:20px;
@@ -146,23 +146,18 @@ button{
 <!-- ADMIN -->
 <div id="admin">
 
-  <h3>Panel Admin</h3>
+  <h3>🛠 Admin</h3>
 
   <input id="nombre" placeholder="Nombre">
   <input id="precio" placeholder="Precio">
-
-  <!-- ✔ SUBIDA DE IMAGEN REAL -->
   <input type="file" id="img">
 
   <button onclick="agregar()">Agregar producto</button>
-
-  <button onclick="mostrarNequi()">Ver Nequi</button>
-
 </div>
 
-<!-- NEQUI -->
+<!-- NEQUI (VISIBLE EN CLIENTE Y ADMIN) -->
 <div id="nequi">
-  <h3>Nequi</h3>
+  <h3>💳 Nequi</h3>
   <p>318 744 6036</p>
 </div>
 
@@ -175,9 +170,9 @@ button{
 <button id="cartBtn" onclick="toggleCarrito()">🛒</button>
 
 <!-- WHATSAPP -->
-<a class="wa-float" href="https://wa.me/573187446036">💬</a>
+<a class="wa" href="https://wa.me/573187446036">💬</a>
 
-<!-- MODAL IMAGEN -->
+<!-- MODAL -->
 <div id="modal" onclick="cerrar()">
   <img id="imgBig">
 </div>
@@ -219,34 +214,68 @@ function agregar(){
   reader.readAsDataURL(file);
 }
 
-/* NEQUI */
-function mostrarNequi(){
-  let n = document.getElementById("nequi");
-  n.style.display = (n.style.display==="block")?"none":"block";
-}
-
-/* CARRITO */
+/* AGREGAR AL CARRITO */
 function agregarCarrito(i){
-  carrito.push(productos[i]);
+
+  let p = productos[i];
+
+  let existe = carrito.find(x => x.nombre === p.nombre);
+
+  if(existe){
+    existe.cantidad++;
+  }else{
+    carrito.push({...p, cantidad:1});
+  }
+
   actualizar();
 }
 
-/* CARRITO UI */
+/* ACTUALIZAR CARRITO */
 function actualizar(){
 
   let c = document.getElementById("carrito");
-  c.innerHTML="<h3>Carrito</h3>";
+  c.innerHTML = "<h3>🛒 Carrito</h3>";
+
+  let total = 0;
 
   carrito.forEach((p,i)=>{
+
+    total += p.precio * p.cantidad;
+
     c.innerHTML += `
-      <div>
-        ${p.nombre} - $${p.precio}
-        <button onclick="eliminar(${i})">❌</button>
+      <div style="border-bottom:1px solid #eee;padding:5px;">
+        <b>${p.nombre}</b><br>
+        $${p.precio} x ${p.cantidad}
+
+        <div style="display:flex;gap:5px;margin-top:5px;">
+
+          <button onclick="restar(${i})" style="width:50%;background:#ddd;">
+            ➖
+          </button>
+
+          <button onclick="eliminar(${i})" style="width:50%;background:#ff4d4d;color:white;">
+            🗑
+          </button>
+
+        </div>
       </div>
     `;
   });
 
-  c.innerHTML += `<button onclick="comprar()">Finalizar</button>`;
+  c.innerHTML += `<p><b>Total: $${total}</b></p>`;
+  c.innerHTML += `<button onclick="comprar()">Finalizar compra</button>`;
+}
+
+/* RESTAR */
+function restar(i){
+
+  carrito[i].cantidad--;
+
+  if(carrito[i].cantidad<=0){
+    carrito.splice(i,1);
+  }
+
+  actualizar();
 }
 
 /* ELIMINAR */
@@ -261,7 +290,7 @@ function comprar(){
   let total = 0;
 
   carrito.forEach(p=>{
-    total += parseInt(p.precio);
+    total += p.precio * p.cantidad;
   });
 
   window.open("https://wa.me/573187446036?text=Total%20pedido:%20"+total);
@@ -274,7 +303,7 @@ function toggleCarrito(){
   actualizar();
 }
 
-/* ZOOM */
+/* ZOOM IMAGEN */
 function ver(src){
   document.getElementById("modal").style.display="flex";
   document.getElementById("imgBig").src=src;
