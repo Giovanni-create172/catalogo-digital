@@ -1,90 +1,100 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mi Catálogo</title>
+<meta charset="UTF-8">
+<title>Mi Catálogo</title>
 
-  <style>
-    body { font-family: Arial; background: #eef1f5; margin: 0; }
+<style>
+body { font-family: Arial; background:#eef1f5; margin:0; }
 
-    header {
-      background: #0a66c2;
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 22px;
-    }
+header {
+  background:#0a66c2;
+  color:white;
+  padding:15px;
+  text-align:center;
+  font-size:22px;
+}
 
-    .formulario {
-      background: white;
-      padding: 15px;
-      margin: 20px;
-      border-radius: 10px;
-    }
+.formulario {
+  background:white;
+  padding:15px;
+  margin:20px;
+  border-radius:10px;
+}
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 5px 0;
-    }
+input, select {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+}
 
-    button {
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      width: 100%;
-      margin-top: 5px;
-      cursor: pointer;
-    }
+button {
+  padding:10px;
+  border:none;
+  border-radius:5px;
+  color:white;
+  width:100%;
+  margin-top:5px;
+  cursor:pointer;
+}
 
-    .guardar { background: green; }
-    .eliminar { background: red; }
-    .whatsapp { background: #25d366; }
+.guardar { background:green; }
+.eliminar { background:red; }
+.whatsapp { background:#25d366; }
 
-    .contenedor {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
-      gap: 15px;
-      padding: 15px;
-    }
+.filtros {
+  padding:10px;
+  text-align:center;
+}
 
-    .producto {
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+.contenedor {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:15px;
+  padding:15px;
+}
 
-    .producto img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      cursor: pointer;
-    }
+.producto {
+  background:white;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
 
-    .info { padding: 10px; }
+.producto img {
+  width:100%;
+  height:200px;
+  object-fit:cover;
+  cursor:pointer;
+}
 
-    .precio {
-      color: #0a66c2;
-      font-weight: bold;
-    }
+.info { padding:10px; }
 
-    #modal {
-      display: none;
-      position: fixed;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      justify-content: center;
-      align-items: center;
-    }
+.precio {
+  color:#0a66c2;
+  font-weight:bold;
+}
 
-    #modal img {
-      max-width: 90%;
-      max-height: 90%;
-    }
-  </style>
+.categoria {
+  font-size:12px;
+  color:gray;
+}
+
+#modal {
+  display:none;
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.8);
+  justify-content:center;
+  align-items:center;
+}
+
+#modal img {
+  max-width:90%;
+  max-height:90%;
+}
+</style>
 </head>
 
 <body>
@@ -94,8 +104,27 @@
 <div class="formulario" id="adminPanel">
   <input type="text" id="nombre" placeholder="Nombre del producto">
   <input type="number" id="precio" placeholder="Precio">
+
+  <select id="categoria">
+    <option value="">Seleccionar categoría</option>
+    <option>Ropa</option>
+    <option>Zapatos</option>
+    <option>Tecnología</option>
+    <option>Accesorios</option>
+  </select>
+
   <input type="file" id="imagenInput" accept="image/*">
   <button class="guardar" onclick="guardarProducto()">Guardar producto</button>
+</div>
+
+<div class="filtros">
+  <select id="filtroCategoria" onchange="filtrarProductos()">
+    <option value="">Todas las categorías</option>
+    <option>Ropa</option>
+    <option>Zapatos</option>
+    <option>Tecnología</option>
+    <option>Accesorios</option>
+  </select>
 </div>
 
 <div class="contenedor" id="listaProductos"></div>
@@ -105,108 +134,133 @@
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC23m8avf3Z",
-    authDomain: "catalogo-digital-4a956.firebaseapp.com",
-    projectId: "catalogo-digital-4a956",
-    storageBucket: "catalogo-digital-4a956.firebasestorage.app",
-    messagingSenderId: "78408824293",
-    appId: "1:78408824293:web:4aafa762fc4e9e5267eb0c"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyC23m8avf3Z",
+  authDomain: "catalogo-digital-4a956.firebaseapp.com",
+  projectId: "catalogo-digital-4a956",
+  storageBucket: "catalogo-digital-4a956.firebasestorage.app",
+  messagingSenderId: "78408824293",
+  appId: "1:78408824293:web:4aafa762fc4e9e5267eb0c"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  const lista = document.getElementById("listaProductos");
-  const telefono = "573187446036";
+const lista = document.getElementById("listaProductos");
+const telefono = "573187446036";
 
-  // 🔑 detectar modo admin
-  const params = new URLSearchParams(window.location.search);
-  const esAdmin = params.get("admin") === "1234";
+let todosProductos = [];
 
-  if (!esAdmin) {
-    document.getElementById("adminPanel").style.display = "none";
+const params = new URLSearchParams(window.location.search);
+const esAdmin = params.get("admin") === "1234";
+
+if (!esAdmin) {
+  document.getElementById("adminPanel").style.display = "none";
+}
+
+async function guardarProducto() {
+  let nombre = document.getElementById("nombre").value;
+  let precio = document.getElementById("precio").value;
+  let categoria = document.getElementById("categoria").value;
+  let file = document.getElementById("imagenInput").files[0];
+
+  if (!nombre || !precio || !categoria || !file) {
+    alert("Completa todo");
+    return;
   }
 
-  async function guardarProducto() {
-    let nombre = document.getElementById("nombre").value;
-    let precio = document.getElementById("precio").value;
-    let file = document.getElementById("imagenInput").files[0];
+  let reader = new FileReader();
 
-    if (!nombre || !precio || !file) return alert("Completa todo");
-
-    let reader = new FileReader();
-
-    reader.onload = async function(e) {
-      await addDoc(collection(db, "productos"), {
-        nombre,
-        precio,
-        imagen: e.target.result
-      });
-
-      mostrarProductos();
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  async function eliminarProducto(id) {
-    await deleteDoc(doc(db, "productos", id));
-    mostrarProductos();
-  }
-
-  async function mostrarProductos() {
-    lista.innerHTML = "";
-    const datos = await getDocs(collection(db, "productos"));
-
-    datos.forEach((docu) => {
-      let p = docu.data();
-
-      let mensaje = encodeURIComponent(
-        `Hola, quiero este producto: ${p.nombre} - $${p.precio}`
-      );
-
-      lista.innerHTML += `
-        <div class="producto">
-          <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
-          <div class="info">
-            <h3>${p.nombre}</h3>
-            <p class="precio">$${p.precio}</p>
-            <button class="whatsapp"
-              onclick="window.open('https://wa.me/${telefono}?text=${mensaje}')">
-              Comprar por WhatsApp
-            </button>
-
-            ${esAdmin ? `<button class="eliminar"
-              onclick="eliminarProducto('${docu.id}')">Eliminar</button>` : ""}
-          </div>
-        </div>
-      `;
+  reader.onload = async function(e) {
+    await addDoc(collection(db, "productos"), {
+      nombre,
+      precio,
+      categoria,
+      imagen: e.target.result
     });
-  }
 
-  function verImagen(src) {
-    document.getElementById("modal").style.display = "flex";
-    document.getElementById("imagenGrande").src = src;
-  }
-
-  document.getElementById("modal").onclick = () => {
-    document.getElementById("modal").style.display = "none";
+    cargarProductos();
   };
 
-  window.guardarProducto = guardarProducto;
-  window.eliminarProducto = eliminarProducto;
-  window.verImagen = verImagen;
+  reader.readAsDataURL(file);
+}
 
-  mostrarProductos();
+async function eliminarProducto(id) {
+  await deleteDoc(doc(db, "productos", id));
+  cargarProductos();
+}
+
+async function cargarProductos() {
+  todosProductos = [];
+  const datos = await getDocs(collection(db, "productos"));
+
+  datos.forEach((docu) => {
+    todosProductos.push({ id: docu.id, ...docu.data() });
+  });
+
+  mostrarProductos(todosProductos);
+}
+
+function mostrarProductos(listaFiltrada) {
+  lista.innerHTML = "";
+
+  listaFiltrada.forEach((p) => {
+    let mensaje = encodeURIComponent(
+      `Hola, quiero este producto: ${p.nombre} - $${p.precio}`
+    );
+
+    lista.innerHTML += `
+      <div class="producto">
+        <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
+        <div class="info">
+          <h3>${p.nombre}</h3>
+          <p class="precio">$${p.precio}</p>
+          <p class="categoria">${p.categoria}</p>
+
+          <button class="whatsapp"
+            onclick="window.open('https://wa.me/${telefono}?text=${mensaje}')">
+            Comprar por WhatsApp
+          </button>
+
+          ${esAdmin ? `<button class="eliminar"
+            onclick="eliminarProducto('${p.id}')">Eliminar</button>` : ""}
+        </div>
+      </div>
+    `;
+  });
+}
+
+function filtrarProductos() {
+  let categoria = document.getElementById("filtroCategoria").value;
+
+  if (!categoria) {
+    mostrarProductos(todosProductos);
+  } else {
+    let filtrados = todosProductos.filter(p => p.categoria === categoria);
+    mostrarProductos(filtrados);
+  }
+}
+
+function verImagen(src) {
+  document.getElementById("modal").style.display = "flex";
+  document.getElementById("imagenGrande").src = src;
+}
+
+document.getElementById("modal").onclick = () => {
+  document.getElementById("modal").style.display = "none";
+};
+
+window.guardarProducto = guardarProducto;
+window.eliminarProducto = eliminarProducto;
+window.verImagen = verImagen;
+window.filtrarProductos = filtrarProductos;
+
+cargarProductos();
 </script>
 
 </body>
-</html> 
-
-
- 
+</html>
