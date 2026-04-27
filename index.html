@@ -48,11 +48,6 @@ header {
   border-radius:12px;
   overflow:hidden;
   box-shadow:0 2px 10px rgba(0,0,0,0.08);
-  transition:0.2s;
-}
-
-.producto:hover {
-  transform:scale(1.02);
 }
 
 .producto img {
@@ -90,7 +85,7 @@ button {
   color:white;
 }
 
-/* ADMIN PANEL PRO */
+/* ADMIN */
 #adminPanel {
   display:none;
   background:white;
@@ -98,10 +93,6 @@ button {
   padding:15px;
   border-radius:12px;
   box-shadow:0 2px 10px rgba(0,0,0,0.1);
-}
-
-#adminPanel h3 {
-  margin-top:0;
 }
 
 #adminPanel input,
@@ -113,33 +104,37 @@ button {
   border:1px solid #ccc;
 }
 
-/* ADMIN ITEM */
 .admin-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
   border:1px solid #eee;
   padding:10px;
   margin:8px 0;
   border-radius:8px;
-  background:#fafafa;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
 }
 
-.admin-item b {
-  font-size:14px;
-}
-
-/* BOTÓN ELIMINAR PRO */
 .delete {
-  background:#e53935;
+  background:red;
   color:white;
   padding:6px 10px;
   border-radius:6px;
-  font-size:12px;
   width:auto;
 }
 
-/* WHATSAPP FLOTANTE */
+/* CARRITO */
+#carrito {
+  position:fixed;
+  right:20px;
+  bottom:80px;
+  width:260px;
+  background:white;
+  padding:10px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+/* WHATSAPP */
 .flotante-wa {
   position:fixed;
   bottom:20px;
@@ -154,7 +149,6 @@ button {
   align-items:center;
   font-size:28px;
   text-decoration:none;
-  box-shadow:0 4px 10px rgba(0,0,0,0.2);
 }
 </style>
 </head>
@@ -169,9 +163,9 @@ button {
 <div id="adminPanel">
   <h3>Panel de Administración</h3>
 
-  <input id="nombre" placeholder="Nombre del producto">
+  <input id="nombre" placeholder="Nombre">
   <input id="precio" placeholder="Precio">
-  <input id="img" placeholder="URL de imagen">
+  <input id="img" placeholder="URL imagen">
 
   <select id="categoria">
     <option>Ropa</option>
@@ -180,20 +174,19 @@ button {
     <option>Accesorios</option>
   </select>
 
-  <button class="add" onclick="agregarProducto()">Agregar producto</button>
+  <button onclick="agregarProducto()">Agregar producto</button>
 
   <hr>
-
   <h3>Productos actuales</h3>
   <div id="listaAdmin"></div>
 </div>
 
 <!-- BUSCADOR -->
 <div class="busqueda">
-  <input type="text" id="search" placeholder="Buscar productos..." onkeyup="render()">
+  <input type="text" id="search" placeholder="Buscar..." onkeyup="render()">
 
   <select id="filtro" onchange="render()">
-    <option value="">Todas las categorías</option>
+    <option value="">Todas</option>
     <option>Ropa</option>
     <option>Zapatos</option>
     <option>Tecnología</option>
@@ -204,6 +197,13 @@ button {
 <!-- PRODUCTOS -->
 <div class="contenedor" id="lista"></div>
 
+<!-- CARRITO -->
+<div id="carrito">
+  <h4>Carrito</h4>
+  <div id="listaCarrito"></div>
+  <p id="total">Total: $0</p>
+</div>
+
 <!-- WHATSAPP -->
 <a class="flotante-wa"
 href="https://wa.me/573187446036"
@@ -211,12 +211,14 @@ target="_blank">💬</a>
 
 <script>
 
-let productos = [
+let productos = JSON.parse(localStorage.getItem("productos")) || [
   {nombre:"Zapatos Nike", precio:120000, img:"img/zapatos.jpg", categoria:"Zapatos"},
   {nombre:"Camisa Polo", precio:60000, img:"img/camisa.jpg", categoria:"Ropa"}
 ];
 
-/* ADMIN ACTIVACIÓN */
+let carrito = [];
+
+/* ADMIN */
 const params = new URLSearchParams(window.location.search);
 const esAdmin = params.get("admin") === "1234";
 
@@ -224,7 +226,12 @@ if(esAdmin){
   document.getElementById("adminPanel").style.display = "block";
 }
 
-/* AGREGAR */
+/* GUARDAR LOCAL */
+function guardar(){
+  localStorage.setItem("productos", JSON.stringify(productos));
+}
+
+/* AGREGAR PRODUCTO */
 function agregarProducto(){
 
   let nombre = document.getElementById("nombre").value;
@@ -233,11 +240,13 @@ function agregarProducto(){
   let categoria = document.getElementById("categoria").value;
 
   if(!nombre || !precio || !img){
-    alert("Completa todos los campos");
+    alert("Completa todo");
     return;
   }
 
   productos.push({nombre, precio, img, categoria});
+
+  guardar();
 
   render();
   renderAdmin();
@@ -245,16 +254,48 @@ function agregarProducto(){
   alert("Producto agregado ✔");
 }
 
-/* ELIMINAR */
+/* ELIMINAR PRODUCTO */
 function eliminarProducto(i){
-
-  let confirmar = confirm("¿Seguro que quieres eliminar este producto?");
-
-  if(confirmar){
+  if(confirm("¿Eliminar producto?")){
     productos.splice(i,1);
+
+    guardar();
+
     render();
     renderAdmin();
   }
+}
+
+/* CARRITO */
+function agregarCarrito(i){
+  carrito.push(productos[i]);
+  actualizarCarrito();
+}
+
+function eliminarCarrito(i){
+  carrito.splice(i,1);
+  actualizarCarrito();
+}
+
+function actualizarCarrito(){
+
+  let cont = document.getElementById("listaCarrito");
+  let total = 0;
+
+  cont.innerHTML = "";
+
+  carrito.forEach((p,i)=>{
+    total += parseInt(p.precio);
+
+    cont.innerHTML += `
+      <div>
+        ${p.nombre} - $${p.precio}
+        <button onclick="eliminarCarrito(${i})">X</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("total").innerText = "Total: $" + total;
 }
 
 /* RENDER CLIENTE */
@@ -271,7 +312,7 @@ function render(){
     p.nombre.toLowerCase().includes(search) &&
     (filtro === "" || p.categoria === filtro)
   )
-  .forEach(p=>{
+  .forEach((p,i)=>{
 
     cont.innerHTML += `
       <div class="producto">
@@ -280,7 +321,9 @@ function render(){
           <h3>${p.nombre}</h3>
           <p class="precio">$${p.precio}</p>
 
-          <button class="add">Agregar</button>
+          <button class="add" onclick="agregarCarrito(${i})">
+            Agregar al carrito
+          </button>
 
           <button class="wa"
           onclick="window.open('https://wa.me/573187446036?text=' + encodeURIComponent('Quiero: ${p.nombre}'))">
