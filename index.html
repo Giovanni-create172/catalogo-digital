@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -144,6 +144,28 @@ button {
   <img id="imagenGrande">
 </div>
 
+<!-- 🔥 BOTÓN FLOTANTE WHATSAPP -->
+<a href="https://wa.me/573187446036?text=Hola%20quiero%20información%20de%20los%20productos"
+   target="_blank"
+   style="
+   position: fixed;
+   bottom: 20px;
+   right: 20px;
+   background: #25d366;
+   color: white;
+   width: 60px;
+   height: 60px;
+   border-radius: 50%;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   font-size: 30px;
+   text-decoration: none;
+   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+   z-index: 999;">
+   💬
+</a>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
@@ -221,6 +243,10 @@ function mostrarProductos(listaFiltrada) {
 
   listaFiltrada.forEach((p) => {
 
+    let mensaje = encodeURIComponent(
+      `Hola, quiero este producto: ${p.nombre} - $${p.precio}`
+    );
+
     lista.innerHTML += `
       <div class="producto">
         <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
@@ -230,7 +256,7 @@ function mostrarProductos(listaFiltrada) {
           <p class="categoria">${p.categoria}</p>
 
           <button class="whatsapp"
-            onclick="window.open('https://wa.me/${telefono}?text=' + encodeURIComponent('Hola, quiero comprar el producto: ' + '${p.nombre}' + ' por $' + '${p.precio}'))">
+            onclick="window.open('https://wa.me/${telefono}?text=${mensaje}')">
             Comprar por WhatsApp
           </button>
 
