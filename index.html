@@ -8,7 +8,7 @@
 body {
   margin:0;
   font-family: Arial;
-  background:#eaeded;
+  background:#eef1f5;
 }
 
 /* HEADER */
@@ -16,15 +16,11 @@ header {
   background:#131921;
   color:white;
   text-align:center;
-  padding:10px;
+  padding:12px;
+  font-size:18px;
 }
 
-header img {
-  width:40px;
-  border-radius:50%;
-}
-
-/* BUSCADOR + FILTRO */
+/* BUSCADOR */
 .busqueda {
   text-align:center;
   padding:10px;
@@ -35,6 +31,8 @@ header img {
   width:80%;
   padding:10px;
   margin:5px 0;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 
 /* PRODUCTOS */
@@ -47,9 +45,14 @@ header img {
 
 .producto {
   background:white;
-  border-radius:10px;
+  border-radius:12px;
   overflow:hidden;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+  box-shadow:0 2px 10px rgba(0,0,0,0.08);
+  transition:0.2s;
+}
+
+.producto:hover {
+  transform:scale(1.02);
 }
 
 .producto img {
@@ -70,41 +73,73 @@ header img {
 /* BOTONES */
 button {
   width:100%;
-  padding:8px;
-  margin-top:5px;
+  padding:9px;
+  margin-top:6px;
   border:none;
-  border-radius:5px;
+  border-radius:6px;
   cursor:pointer;
+  font-weight:bold;
 }
 
-.add { background:#ff9900; }
-.wa { background:#25d366; color:white; }
-
-/* CARRITO */
-#carrito {
-  position:fixed;
-  right:20px;
-  bottom:80px;
-  width:280px;
-  background:white;
-  padding:10px;
-  border-radius:10px;
-  display:none;
-}
-
-#cartBtn {
-  position:fixed;
-  bottom:20px;
-  left:20px;
-  width:60px;
-  height:60px;
-  border-radius:50%;
+.add {
   background:#ff9900;
-  font-size:24px;
-  border:none;
 }
 
-/* WHATSAPP */
+.wa {
+  background:#25d366;
+  color:white;
+}
+
+/* ADMIN PANEL PRO */
+#adminPanel {
+  display:none;
+  background:white;
+  margin:15px;
+  padding:15px;
+  border-radius:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+#adminPanel h3 {
+  margin-top:0;
+}
+
+#adminPanel input,
+#adminPanel select {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+/* ADMIN ITEM */
+.admin-item {
+  border:1px solid #eee;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  background:#fafafa;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.admin-item b {
+  font-size:14px;
+}
+
+/* BOTÓN ELIMINAR PRO */
+.delete {
+  background:#e53935;
+  color:white;
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:12px;
+  width:auto;
+}
+
+/* WHATSAPP FLOTANTE */
 .flotante-wa {
   position:fixed;
   bottom:20px;
@@ -119,20 +154,7 @@ button {
   align-items:center;
   font-size:28px;
   text-decoration:none;
-}
-
-/* ADMIN */
-#adminPanel {
-  display:none;
-  background:white;
-  padding:15px;
-}
-
-.admin-item {
-  border:1px solid #ddd;
-  padding:8px;
-  margin:5px 0;
-  border-radius:5px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.2);
 }
 </style>
 </head>
@@ -140,17 +162,16 @@ button {
 <body>
 
 <header>
-  <img src="logo.png">
-  <h1>Encanto Ventas Pasto</h1>
+  Encanto Ventas Pasto
 </header>
 
 <!-- ADMIN -->
 <div id="adminPanel">
   <h3>Panel de Administración</h3>
 
-  <input id="nombre" placeholder="Nombre">
+  <input id="nombre" placeholder="Nombre del producto">
   <input id="precio" placeholder="Precio">
-  <input id="img" placeholder="URL imagen">
+  <input id="img" placeholder="URL de imagen">
 
   <select id="categoria">
     <option>Ropa</option>
@@ -159,19 +180,20 @@ button {
     <option>Accesorios</option>
   </select>
 
-  <button onclick="agregarProducto()">Agregar producto</button>
+  <button class="add" onclick="agregarProducto()">Agregar producto</button>
 
   <hr>
+
   <h3>Productos actuales</h3>
   <div id="listaAdmin"></div>
 </div>
 
 <!-- BUSCADOR -->
 <div class="busqueda">
-  <input type="text" id="search" placeholder="Buscar..." onkeyup="render()">
+  <input type="text" id="search" placeholder="Buscar productos..." onkeyup="render()">
 
   <select id="filtro" onchange="render()">
-    <option value="">Todas</option>
+    <option value="">Todas las categorías</option>
     <option>Ropa</option>
     <option>Zapatos</option>
     <option>Tecnología</option>
@@ -194,7 +216,7 @@ let productos = [
   {nombre:"Camisa Polo", precio:60000, img:"img/camisa.jpg", categoria:"Ropa"}
 ];
 
-/* ADMIN ACTIVAR */
+/* ADMIN ACTIVACIÓN */
 const params = new URLSearchParams(window.location.search);
 const esAdmin = params.get("admin") === "1234";
 
@@ -202,7 +224,7 @@ if(esAdmin){
   document.getElementById("adminPanel").style.display = "block";
 }
 
-/* AGREGAR PRODUCTO */
+/* AGREGAR */
 function agregarProducto(){
 
   let nombre = document.getElementById("nombre").value;
@@ -210,20 +232,32 @@ function agregarProducto(){
   let img = document.getElementById("img").value;
   let categoria = document.getElementById("categoria").value;
 
+  if(!nombre || !precio || !img){
+    alert("Completa todos los campos");
+    return;
+  }
+
   productos.push({nombre, precio, img, categoria});
 
   render();
   renderAdmin();
+
+  alert("Producto agregado ✔");
 }
 
-/* ELIMINAR PRODUCTO */
+/* ELIMINAR */
 function eliminarProducto(i){
-  productos.splice(i,1);
-  render();
-  renderAdmin();
+
+  let confirmar = confirm("¿Seguro que quieres eliminar este producto?");
+
+  if(confirmar){
+    productos.splice(i,1);
+    render();
+    renderAdmin();
+  }
 }
 
-/* RENDER CLIENTES */
+/* RENDER CLIENTE */
 function render(){
 
   let cont = document.getElementById("lista");
@@ -270,11 +304,12 @@ function renderAdmin(){
 
     cont.innerHTML += `
       <div class="admin-item">
-        <b>${p.nombre}</b> - $${p.precio}
-        <br>
+        <div>
+          <b>${p.nombre}</b><br>
+          $${p.precio}
+        </div>
 
-        <button style="background:red;color:white"
-        onclick="eliminarProducto(${i})">
+        <button class="delete" onclick="eliminarProducto(${i})">
           Eliminar
         </button>
       </div>
