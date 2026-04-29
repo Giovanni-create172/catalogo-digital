@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -16,6 +16,19 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   border:1px solid #ccc;
 }
 
+/* ⭐ reseñas */
+#reseñas{
+  background:white;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+}
+
+.res{
+  border-bottom:1px solid #eee;
+  padding:5px 0;
+}
+
 .contenedor{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -23,18 +36,8 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   padding:15px;
 }
 
-.producto{
-  background:white;
-  border-radius:12px;
-  overflow:hidden;
-}
-
-.producto img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-  cursor:pointer;
-}
+.producto{background:white;border-radius:12px;}
+.producto img{width:100%;height:200px;object-fit:cover;}
 
 .info{padding:10px;}
 .precio{color:#b12704;font-weight:bold;}
@@ -82,6 +85,16 @@ button{
 
 <input id="buscador" placeholder="🔍 Buscar producto..." onkeyup="filtrar()">
 
+<!-- ⭐ RESEÑAS -->
+<div id="reseñas">
+  <h3>⭐ Opiniones de clientes</h3>
+  <div id="listaReseñas"></div>
+
+  <input id="nombreReseña" placeholder="Tu nombre">
+  <input id="textoReseña" placeholder="Tu opinión">
+  <button onclick="agregarReseña()">Enviar reseña</button>
+</div>
+
 <div id="carritoBtn" onclick="toggleCarrito()">🛒 (0)</div>
 
 <div id="carrito">
@@ -96,7 +109,7 @@ button{
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, onSnapshot } 
+import { getFirestore, collection, addDoc, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
@@ -110,6 +123,7 @@ const db = getFirestore(app);
 let productos=[];
 let carrito=[];
 
+/* PRODUCTOS */
 onSnapshot(collection(db,"productos"),(snap)=>{
   productos=[];
   snap.forEach(doc=>productos.push(doc.data()));
@@ -139,13 +153,14 @@ function mostrar(lista){
   });
 }
 
+/* 🔍 BUSCADOR */
 window.filtrar=()=>{
-  let texto=document.getElementById("buscador").value.toLowerCase();
-  let filtrados=productos.filter(p=>p.nombre.toLowerCase().includes(texto));
-  mostrar(filtrados);
+  let t=document.getElementById("buscador").value.toLowerCase();
+  let f=productos.filter(p=>p.nombre.toLowerCase().includes(t));
+  mostrar(f);
 }
 
-/* carrito */
+/* 🛒 CARRITO */
 window.agregarCarrito=(p)=>{
   carrito.push(p);
   render();
@@ -180,6 +195,35 @@ window.enviarPedido=()=>{
   window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
 }
 
+/* ⭐ RESEÑAS */
+window.agregarReseña=async ()=>{
+  if(!nombreReseña.value || !textoReseña.value){
+    alert("Completa los campos");
+    return;
+  }
+
+  await addDoc(collection(db,"reseñas"),{
+    nombre:nombreReseña.value,
+    texto:textoReseña.value
+  });
+}
+
+onSnapshot(collection(db,"reseñas"),(snap)=>{
+  let cont=document.getElementById("listaReseñas");
+  cont.innerHTML="";
+
+  snap.forEach(doc=>{
+    let r=doc.data();
+    cont.innerHTML+=`
+      <div class="res">
+        <b>${r.nombre}</b><br>
+        ${r.texto}
+      </div>
+    `;
+  });
+});
+
+/* ZOOM */
 window.verImagen=(url)=>{
   let w=window.open("");
   w.document.write("<img src='"+url+"' style='width:100%'>");
@@ -188,4 +232,4 @@ window.verImagen=(url)=>{
 </script>
 
 </body>
-</html> 
+</html>
