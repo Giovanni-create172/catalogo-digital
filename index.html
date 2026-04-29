@@ -47,8 +47,9 @@ button{
 
 .add{background:#f59e0b;}
 .wa{background:#25d366;color:white;}
-.del{background:#ef4444;color:white;margin-top:5px;}
+.del{background:#ef4444;color:white;}
 
+/* 🛒 BOTÓN */
 #carritoBtn{
   position:fixed;
   top:20px;
@@ -60,17 +61,29 @@ button{
   cursor:pointer;
 }
 
+/* 🛒 PANEL MEJORADO */
 #carrito{
   position:fixed;
-  right:0;
+  right:-100%;
   top:0;
   width:300px;
   height:100%;
   background:white;
   box-shadow:-3px 0 10px rgba(0,0,0,0.2);
   padding:15px;
-  display:none;
+  transition:0.3s;
   overflow:auto;
+  z-index:999;
+}
+
+#carrito.active{
+  right:0;
+}
+
+#cerrar{
+  background:#111827;
+  color:white;
+  margin-bottom:10px;
 }
 </style>
 </head>
@@ -82,6 +95,7 @@ button{
 <div id="carritoBtn" onclick="toggleCarrito()">🛒 (0)</div>
 
 <div id="carrito">
+  <button id="cerrar" onclick="toggleCarrito()">Cerrar</button>
   <h3>Carrito</h3>
   <div id="items"></div>
 
@@ -131,7 +145,7 @@ if(esAdmin){
   document.getElementById("admin").style.display="block";
 }
 
-/* AGREGAR PRODUCTO */
+/* AGREGAR */
 async function agregar(){
   if(!imagen.value){
     alert("Pega una URL de imagen");
@@ -145,14 +159,13 @@ async function agregar(){
   });
 }
 
-/* MOSTRAR PRODUCTOS */
+/* MOSTRAR */
 onSnapshot(collection(db,"productos"),(snapshot)=>{
 
   let cont = document.getElementById("lista");
   cont.innerHTML="";
 
   snapshot.forEach(doc=>{
-
     let p = doc.data();
 
     cont.innerHTML+=`
@@ -162,22 +175,17 @@ onSnapshot(collection(db,"productos"),(snapshot)=>{
           <b>${p.nombre}</b>
           <p class="precio">$${p.precio}</p>
 
-          <button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>
-            Agregar
-          </button>
+          <button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
 
           <button class="wa"
           onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">
-            WhatsApp
-          </button>
+          WhatsApp</button>
         </div>
       </div>
     `;
   });
 
 });
-
-window.agregar = agregar;
 
 /* 🛒 CARRITO */
 window.agregarCarrito = function(p){
@@ -189,11 +197,11 @@ function renderCarrito(){
   let cont = document.getElementById("items");
   cont.innerHTML="";
 
-  carrito.forEach((p,index)=>{
+  carrito.forEach((p,i)=>{
     cont.innerHTML+=`
       <div>
         <p>${p.nombre} - $${p.precio}</p>
-        <button class="del" onclick="eliminar(${index})">Quitar</button>
+        <button class="del" onclick="eliminar(${i})">Quitar</button>
       </div>
     `;
   });
@@ -206,35 +214,30 @@ window.eliminar = function(i){
   renderCarrito();
 }
 
-/* 📲 ENVIAR PEDIDO */
+/* 📲 WHATSAPP */
 window.enviarPedido = function(){
-
   if(carrito.length===0){
     alert("Carrito vacío");
     return;
   }
 
-  let mensaje = "Hola, quiero pedir:\n";
-
+  let mensaje="Hola, quiero pedir:\n";
   carrito.forEach(p=>{
-    mensaje += "- "+p.nombre+" ($"+p.precio+")\n";
+    mensaje+= "- "+p.nombre+" ($"+p.precio+")\n";
   });
 
-  let url = "https://wa.me/573187446036?text="+encodeURIComponent(mensaje);
-
-  window.open(url);
+  window.open("https://wa.me/573187446036?text="+encodeURIComponent(mensaje));
 }
 
-/* CARRITO UI */
+/* UI */
 window.toggleCarrito = function(){
-  let c = document.getElementById("carrito");
-  c.style.display = c.style.display==="block"?"none":"block";
+  document.getElementById("carrito").classList.toggle("active");
 }
 
 /* ZOOM */
 window.verImagen = function(url){
-  let ventana = window.open("");
-  ventana.document.write("<img src='"+url+"' style='width:100%'>");
+  let v=window.open("");
+  v.document.write("<img src='"+url+"' style='width:100%'>");
 }
 
 </script>
