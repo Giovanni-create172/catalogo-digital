@@ -47,6 +47,7 @@ button{
 
 .add{background:#f59e0b;}
 .wa{background:#25d366;color:white;}
+.del{background:#ef4444;color:white;margin-top:5px;}
 
 #carritoBtn{
   position:fixed;
@@ -83,6 +84,10 @@ button{
 <div id="carrito">
   <h3>Carrito</h3>
   <div id="items"></div>
+
+  <button class="wa" onclick="enviarPedido()">
+    Enviar pedido por WhatsApp
+  </button>
 </div>
 
 <div id="admin">
@@ -165,7 +170,6 @@ onSnapshot(collection(db,"productos"),(snapshot)=>{
           onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">
             WhatsApp
           </button>
-
         </div>
       </div>
     `;
@@ -185,15 +189,43 @@ function renderCarrito(){
   let cont = document.getElementById("items");
   cont.innerHTML="";
 
-  carrito.forEach(p=>{
+  carrito.forEach((p,index)=>{
     cont.innerHTML+=`
-      <p>${p.nombre} - $${p.precio}</p>
+      <div>
+        <p>${p.nombre} - $${p.precio}</p>
+        <button class="del" onclick="eliminar(${index})">Quitar</button>
+      </div>
     `;
   });
 
   document.getElementById("carritoBtn").innerText = "🛒 ("+carrito.length+")";
 }
 
+window.eliminar = function(i){
+  carrito.splice(i,1);
+  renderCarrito();
+}
+
+/* 📲 ENVIAR PEDIDO */
+window.enviarPedido = function(){
+
+  if(carrito.length===0){
+    alert("Carrito vacío");
+    return;
+  }
+
+  let mensaje = "Hola, quiero pedir:\n";
+
+  carrito.forEach(p=>{
+    mensaje += "- "+p.nombre+" ($"+p.precio+")\n";
+  });
+
+  let url = "https://wa.me/573187446036?text="+encodeURIComponent(mensaje);
+
+  window.open(url);
+}
+
+/* CARRITO UI */
 window.toggleCarrito = function(){
   let c = document.getElementById("carrito");
   c.style.display = c.style.display==="block"?"none":"block";
