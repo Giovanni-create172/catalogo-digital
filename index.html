@@ -8,8 +8,13 @@
 body{margin:0;font-family:Arial;background:#f4f6f8;}
 header{background:#111827;color:white;text-align:center;padding:15px;font-weight:bold;}
 
-#admin{display:none;background:white;margin:10px;padding:10px;border-radius:10px;}
-#nequi{background:white;margin:10px;padding:10px;border-radius:10px;text-align:center;}
+#buscador{
+  margin:10px;
+  padding:10px;
+  width:calc(100% - 40px);
+  border-radius:8px;
+  border:1px solid #ccc;
+}
 
 .contenedor{
   display:grid;
@@ -22,7 +27,6 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   background:white;
   border-radius:12px;
   overflow:hidden;
-  box-shadow:0 3px 10px rgba(0,0,0,0.08);
 }
 
 .producto img{
@@ -41,27 +45,22 @@ button{
   margin-top:5px;
   border:none;
   border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
 }
 
 .add{background:#f59e0b;}
 .wa{background:#25d366;color:white;}
 .del{background:#ef4444;color:white;}
 
-/* 🛒 BOTÓN */
 #carritoBtn{
   position:fixed;
   top:20px;
   right:20px;
   background:#111827;
   color:white;
-  padding:10px 15px;
+  padding:10px;
   border-radius:20px;
-  cursor:pointer;
 }
 
-/* 🛒 PANEL MEJORADO */
 #carrito{
   position:fixed;
   right:-100%;
@@ -69,22 +68,11 @@ button{
   width:300px;
   height:100%;
   background:white;
-  box-shadow:-3px 0 10px rgba(0,0,0,0.2);
   padding:15px;
   transition:0.3s;
-  overflow:auto;
-  z-index:999;
 }
 
-#carrito.active{
-  right:0;
-}
-
-#cerrar{
-  background:#111827;
-  color:white;
-  margin-bottom:10px;
-}
+#carrito.active{right:0;}
 </style>
 </head>
 
@@ -92,29 +80,15 @@ button{
 
 <header>Encanto Ventas Pasto</header>
 
+<input id="buscador" placeholder="🔍 Buscar producto..." onkeyup="filtrar()">
+
 <div id="carritoBtn" onclick="toggleCarrito()">🛒 (0)</div>
 
 <div id="carrito">
-  <button id="cerrar" onclick="toggleCarrito()">Cerrar</button>
+  <button onclick="toggleCarrito()">Cerrar</button>
   <h3>Carrito</h3>
   <div id="items"></div>
-
-  <button class="wa" onclick="enviarPedido()">
-    Enviar pedido por WhatsApp
-  </button>
-</div>
-
-<div id="admin">
-  <h3>🛠 Admin</h3>
-  <input id="nombre" placeholder="Nombre">
-  <input id="precio" placeholder="Precio">
-  <input id="imagen" placeholder="Pega URL de la imagen">
-  <button onclick="agregar()">Agregar producto</button>
-</div>
-
-<div id="nequi">
-  <h3>💳 Nequi</h3>
-  <p>3187446036</p>
+  <button class="wa" onclick="enviarPedido()">Enviar por WhatsApp</button>
 </div>
 
 <div class="contenedor" id="lista"></div>
@@ -122,52 +96,31 @@ button{
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } 
+import { getFirestore, collection, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyC23m8avf3Z",
-  authDomain: "catalogo-digital-4a956.firebaseapp.com",
-  projectId: "catalogo-digital-4a956",
-  storageBucket: "catalogo-digital-4a956.appspot.com",
-  messagingSenderId: "78408824293",
-  appId: "1:78408824293:web:4aafa762fc4e9e5267eb0c"
-};
+const app = initializeApp({
+  apiKey:"AIzaSy",
+  authDomain:"catalogo-digital-4a956.firebaseapp.com",
+  projectId:"catalogo-digital-4a956"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let carrito = [];
+let productos=[];
+let carrito=[];
 
-/* ADMIN */
-const esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
-if(esAdmin){
-  document.getElementById("admin").style.display="block";
-}
+onSnapshot(collection(db,"productos"),(snap)=>{
+  productos=[];
+  snap.forEach(doc=>productos.push(doc.data()));
+  mostrar(productos);
+});
 
-/* AGREGAR */
-async function agregar(){
-  if(!imagen.value){
-    alert("Pega una URL de imagen");
-    return;
-  }
-
-  await addDoc(collection(db,"productos"),{
-    nombre:nombre.value,
-    precio:precio.value,
-    imagen:imagen.value
-  });
-}
-
-/* MOSTRAR */
-onSnapshot(collection(db,"productos"),(snapshot)=>{
-
-  let cont = document.getElementById("lista");
+function mostrar(lista){
+  let cont=document.getElementById("lista");
   cont.innerHTML="";
 
-  snapshot.forEach(doc=>{
-    let p = doc.data();
-
+  lista.forEach(p=>{
     cont.innerHTML+=`
       <div class="producto">
         <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
@@ -184,60 +137,52 @@ onSnapshot(collection(db,"productos"),(snapshot)=>{
       </div>
     `;
   });
-
-});
-
-/* 🛒 CARRITO */
-window.agregarCarrito = function(p){
-  carrito.push(p);
-  renderCarrito();
 }
 
-function renderCarrito(){
-  let cont = document.getElementById("items");
-  cont.innerHTML="";
+window.filtrar=()=>{
+  let texto=document.getElementById("buscador").value.toLowerCase();
+  let filtrados=productos.filter(p=>p.nombre.toLowerCase().includes(texto));
+  mostrar(filtrados);
+}
+
+/* carrito */
+window.agregarCarrito=(p)=>{
+  carrito.push(p);
+  render();
+}
+
+function render(){
+  let c=document.getElementById("items");
+  c.innerHTML="";
 
   carrito.forEach((p,i)=>{
-    cont.innerHTML+=`
-      <div>
-        <p>${p.nombre} - $${p.precio}</p>
-        <button class="del" onclick="eliminar(${i})">Quitar</button>
-      </div>
+    c.innerHTML+=`
+      <p>${p.nombre} - $${p.precio}</p>
+      <button class="del" onclick="eliminar(${i})">Quitar</button>
     `;
   });
 
-  document.getElementById("carritoBtn").innerText = "🛒 ("+carrito.length+")";
+  document.getElementById("carritoBtn").innerText="🛒 ("+carrito.length+")";
 }
 
-window.eliminar = function(i){
+window.eliminar=(i)=>{
   carrito.splice(i,1);
-  renderCarrito();
+  render();
 }
 
-/* 📲 WHATSAPP */
-window.enviarPedido = function(){
-  if(carrito.length===0){
-    alert("Carrito vacío");
-    return;
-  }
-
-  let mensaje="Hola, quiero pedir:\n";
-  carrito.forEach(p=>{
-    mensaje+= "- "+p.nombre+" ($"+p.precio+")\n";
-  });
-
-  window.open("https://wa.me/573187446036?text="+encodeURIComponent(mensaje));
-}
-
-/* UI */
-window.toggleCarrito = function(){
+window.toggleCarrito=()=>{
   document.getElementById("carrito").classList.toggle("active");
 }
 
-/* ZOOM */
-window.verImagen = function(url){
-  let v=window.open("");
-  v.document.write("<img src='"+url+"' style='width:100%'>");
+window.enviarPedido=()=>{
+  let txt="Hola quiero:\n";
+  carrito.forEach(p=>txt+=p.nombre+"\n");
+  window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
+}
+
+window.verImagen=(url)=>{
+  let w=window.open("");
+  w.document.write("<img src='"+url+"' style='width:100%'>");
 }
 
 </script>
