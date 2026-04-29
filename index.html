@@ -45,13 +45,46 @@ button{
   cursor:pointer;
 }
 
+.add{background:#f59e0b;}
 .wa{background:#25d366;color:white;}
+
+/* 🛒 CARRITO */
+#carritoBtn{
+  position:fixed;
+  top:20px;
+  right:20px;
+  background:#111827;
+  color:white;
+  padding:10px 15px;
+  border-radius:20px;
+  cursor:pointer;
+}
+
+#carrito{
+  position:fixed;
+  right:0;
+  top:0;
+  width:300px;
+  height:100%;
+  background:white;
+  box-shadow:-3px 0 10px rgba(0,0,0,0.2);
+  padding:15px;
+  display:none;
+  overflow:auto;
+}
 </style>
 </head>
 
 <body>
 
 <header>Encanto Ventas Pasto</header>
+
+<div id="carritoBtn" onclick="toggleCarrito()">🛒 (0)</div>
+
+<div id="carrito">
+  <h3>Carrito</h3>
+  <div id="items"></div>
+</div>
 
 <div id="admin">
   <h3>🛠 Admin</h3>
@@ -67,11 +100,6 @@ button{
 </div>
 
 <div class="contenedor" id="lista"></div>
-
-<a style="position:fixed;right:20px;bottom:20px;width:60px;height:60px;
-background:#25d366;border-radius:50%;display:flex;justify-content:center;
-align-items:center;font-size:26px;color:white;text-decoration:none;"
-href="https://wa.me/573187446036">💬</a>
 
 <script type="module">
 
@@ -91,15 +119,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let carrito = [];
+
 /* ADMIN */
 const esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
 if(esAdmin){
   document.getElementById("admin").style.display="block";
 }
 
-/* AGREGAR */
+/* AGREGAR PRODUCTO */
 async function agregar(){
-
   if(!imagen.value){
     alert("Pega una URL de imagen");
     return;
@@ -112,7 +141,7 @@ async function agregar(){
   });
 }
 
-/* MOSTRAR */
+/* MOSTRAR PRODUCTOS */
 onSnapshot(collection(db,"productos"),(snapshot)=>{
 
   let cont = document.getElementById("lista");
@@ -129,9 +158,8 @@ onSnapshot(collection(db,"productos"),(snapshot)=>{
           <b>${p.nombre}</b>
           <p class="precio">$${p.precio}</p>
 
-          <button class="wa"
-          onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">
-            WhatsApp
+          <button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>
+            Agregar
           </button>
         </div>
       </div>
@@ -142,14 +170,36 @@ onSnapshot(collection(db,"productos"),(snapshot)=>{
 
 window.agregar = agregar;
 
-</script>
+/* 🛒 CARRITO */
+window.agregarCarrito = function(p){
+  carrito.push(p);
+  renderCarrito();
+}
 
-<!-- 🔥 ZOOM IMAGEN -->
-<script>
-function verImagen(url){
+function renderCarrito(){
+  let cont = document.getElementById("items");
+  cont.innerHTML="";
+
+  carrito.forEach(p=>{
+    cont.innerHTML+=`
+      <p>${p.nombre} - $${p.precio}</p>
+    `;
+  });
+
+  document.getElementById("carritoBtn").innerText = "🛒 ("+carrito.length+")";
+}
+
+window.toggleCarrito = function(){
+  let c = document.getElementById("carrito");
+  c.style.display = c.style.display==="block"?"none":"block";
+}
+
+/* ZOOM */
+window.verImagen = function(url){
   let ventana = window.open("");
   ventana.document.write("<img src='"+url+"' style='width:100%'>");
 }
+
 </script>
 
 </body>
