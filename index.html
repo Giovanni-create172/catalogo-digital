@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -29,6 +29,7 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   width:100%;
   height:200px;
   object-fit:cover;
+  cursor:pointer;
 }
 
 .info{padding:10px;}
@@ -123,7 +124,7 @@ onSnapshot(collection(db,"productos"),(snapshot)=>{
 
     cont.innerHTML+=`
       <div class="producto">
-        <img src="${p.imagen}">
+        <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
         <div class="info">
           <b>${p.nombre}</b>
           <p class="precio">$${p.precio}</p>
@@ -143,5 +144,13 @@ window.agregar = agregar;
 
 </script>
 
+<!-- 🔥 ZOOM IMAGEN -->
+<script>
+function verImagen(url){
+  let ventana = window.open("");
+  ventana.document.write("<img src='"+url+"' style='width:100%'>");
+}
+</script>
+
 </body>
-</html> 
+</html>
