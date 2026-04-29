@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -48,7 +48,6 @@ button{
 .add{background:#f59e0b;}
 .wa{background:#25d366;color:white;}
 
-/* 🛒 CARRITO */
 #carritoBtn{
   position:fixed;
   top:20px;
@@ -161,6 +160,12 @@ onSnapshot(collection(db,"productos"),(snapshot)=>{
           <button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>
             Agregar
           </button>
+
+          <button class="wa"
+          onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">
+            WhatsApp
+          </button>
+
         </div>
       </div>
     `;
@@ -203,4 +208,4 @@ window.verImagen = function(url){
 </script>
 
 </body>
-</html>
+</html> 
