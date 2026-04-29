@@ -14,58 +14,37 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
 .contenedor{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:15px;padding:15px;
+  gap:15px;
+  padding:15px;
 }
 
 .producto{
-  background:white;border-radius:12px;overflow:hidden;
+  background:white;
+  border-radius:12px;
+  overflow:hidden;
   box-shadow:0 3px 10px rgba(0,0,0,0.08);
 }
 
 .producto img{
-  width:100%;height:200px;object-fit:cover;cursor:pointer;
+  width:100%;
+  height:200px;
+  object-fit:cover;
 }
 
 .info{padding:10px;}
 .precio{color:#b12704;font-weight:bold;}
 
 button{
-  width:100%;padding:10px;margin-top:5px;border:none;
-  border-radius:8px;cursor:pointer;font-weight:bold;
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  border:none;
+  border-radius:8px;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-.add{background:#f59e0b;}
 .wa{background:#25d366;color:white;}
-
-#carrito{
-  position:fixed;right:20px;bottom:90px;width:280px;
-  background:white;padding:10px;border-radius:10px;
-  display:none;max-height:350px;overflow:auto;
-}
-
-#cartBtn{
-  position:fixed;bottom:20px;left:20px;
-  width:60px;height:60px;border-radius:50%;
-  background:#f59e0b;font-size:26px;
-}
-
-.whatsapp-float{
-  position:fixed;right:20px;bottom:20px;
-  width:60px;height:60px;background:#25d366;
-  border-radius:50%;display:flex;
-  justify-content:center;align-items:center;
-  font-size:26px;color:white;
-}
-
-#modal{
-  display:none;position:fixed;top:0;left:0;
-  width:100%;height:100%;background:rgba(0,0,0,0.8);
-  justify-content:center;align-items:center;
-}
-
-#modal img{
-  max-width:90%;max-height:90%;
-}
 </style>
 </head>
 
@@ -73,40 +52,30 @@ button{
 
 <header>Encanto Ventas Pasto</header>
 
-<!-- ADMIN -->
 <div id="admin">
   <h3>🛠 Admin</h3>
   <input id="nombre" placeholder="Nombre">
   <input id="precio" placeholder="Precio">
-  <input type="file" id="img">
+  <input id="imagen" placeholder="Pega URL de la imagen">
   <button onclick="agregar()">Agregar producto</button>
 </div>
 
-<!-- NEQUI -->
 <div id="nequi">
   <h3>💳 Nequi</h3>
-  <p>318 744 6036</p>
+  <p>3187446036</p>
 </div>
 
-<!-- PRODUCTOS -->
 <div class="contenedor" id="lista"></div>
 
-<!-- CARRITO -->
-<div id="carrito"></div>
-
-<button id="cartBtn" onclick="toggleCarrito()">🛒</button>
-
-<a class="whatsapp-float" href="https://wa.me/573187446036">💬</a>
-
-<!-- MODAL -->
-<div id="modal" onclick="cerrar()">
-  <img id="imgBig">
-</div>
+<a style="position:fixed;right:20px;bottom:20px;width:60px;height:60px;
+background:#25d366;border-radius:50%;display:flex;justify-content:center;
+align-items:center;font-size:26px;color:white;text-decoration:none;"
+href="https://wa.me/573187446036">💬</a>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
+import { getFirestore, collection, addDoc, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -121,170 +90,58 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let productos = [];
-let carrito = [];
-
+/* ADMIN */
 const esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
 if(esAdmin){
   document.getElementById("admin").style.display="block";
 }
 
-/* AGREGAR PRODUCTO */
+/* AGREGAR */
 async function agregar(){
 
-  let file = document.getElementById("img").files[0];
-
-  if(!file){
-    alert("Selecciona imagen");
+  if(!imagen.value){
+    alert("Pega una URL de imagen");
     return;
   }
 
-  let reader = new FileReader();
-
-  reader.onload = async function(e){
-
-    await addDoc(collection(db,"productos"),{
-      nombre:nombre.value,
-      precio:precio.value,
-      img:e.target.result
-    });
-
-    cargar();
-  };
-
-  reader.readAsDataURL(file);
-}
-
-/* CARGAR PRODUCTOS */
-async function cargar(){
-
-  productos = [];
-
-  const datos = await getDocs(collection(db,"productos"));
-
-  datos.forEach(docu=>{
-    productos.push({id:docu.id,...docu.data()});
+  await addDoc(collection(db,"productos"),{
+    nombre:nombre.value,
+    precio:precio.value,
+    imagen:imagen.value
   });
-
-  render();
 }
 
-/* CARRITO */
-function agregarCarrito(i){
+/* MOSTRAR */
+onSnapshot(collection(db,"productos"),(snapshot)=>{
 
-  let p = productos[i];
-
-  let existe = carrito.find(x=>x.nombre===p.nombre);
-
-  if(existe){
-    existe.cantidad++;
-  }else{
-    carrito.push({...p,cantidad:1});
-  }
-
-  actualizar();
-}
-
-function actualizar(){
-
-  let c = document.getElementById("carrito");
-  c.innerHTML="<h3>🛒 Carrito</h3>";
-
-  let total=0;
-
-  carrito.forEach((p,i)=>{
-    total+=p.precio*p.cantidad;
-
-    c.innerHTML+=`
-      <div>
-        ${p.nombre} - $${p.precio} x ${p.cantidad}
-        <button onclick="restar(${i})">➖</button>
-        <button onclick="eliminar(${i})">🗑</button>
-      </div>
-    `;
-  });
-
-  c.innerHTML+=`<p><b>Total: $${total}</b></p>`;
-}
-
-/* RESTAR */
-function restar(i){
-  carrito[i].cantidad--;
-  if(carrito[i].cantidad<=0) carrito.splice(i,1);
-  actualizar();
-}
-
-/* ELIMINAR */
-function eliminar(i){
-  carrito.splice(i,1);
-  actualizar();
-}
-
-/* TOGGLE */
-function toggleCarrito(){
-  let c=document.getElementById("carrito");
-  c.style.display=(c.style.display==="block")?"none":"block";
-  actualizar();
-}
-
-/* ZOOM */
-function ver(src){
-  document.getElementById("modal").style.display="flex";
-  document.getElementById("imgBig").src=src;
-}
-
-function cerrar(){
-  document.getElementById("modal").style.display="none";
-}
-
-/* RENDER */
-function render(){
-
-  let cont=document.getElementById("lista");
+  let cont = document.getElementById("lista");
   cont.innerHTML="";
 
-  productos.forEach((p,i)=>{
+  snapshot.forEach(doc=>{
+
+    let p = doc.data();
+
     cont.innerHTML+=`
       <div class="producto">
-        <img src="${p.img}" onclick="ver('${p.img}')">
+        <img src="${p.imagen}">
         <div class="info">
           <b>${p.nombre}</b>
           <p class="precio">$${p.precio}</p>
 
-          <button class="add" onclick="agregarCarrito(${i})">Agregar</button>
-
           <button class="wa"
-          onclick="window.open('https://wa.me/573187446036?text='+encodeURIComponent('Quiero '+p.nombre))">
+          onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">
             WhatsApp
           </button>
-
-          ${esAdmin ? `<button onclick="borrar('${p.id}')">Eliminar</button>`:""}
         </div>
       </div>
     `;
   });
-}
 
-/* BORRAR */
-async function borrar(id){
-  await deleteDoc(doc(db,"productos",id));
-  cargar();
-}
+});
 
-/* INICIO */
-cargar();
-
-/* 🔥 HACER FUNCIONES GLOBALES */
 window.agregar = agregar;
-window.agregarCarrito = agregarCarrito;
-window.restar = restar;
-window.eliminar = eliminar;
-window.toggleCarrito = toggleCarrito;
-window.ver = ver;
-window.cerrar = cerrar;
-window.borrar = borrar;
 
 </script>
 
 </body>
-</html>
+</html> 
