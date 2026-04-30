@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -8,52 +8,10 @@
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;}
 header{background:#0f172a;color:white;text-align:center;padding:15px;}
 
-#buscador{margin:10px;padding:10px;width:95%;}
-#categorias{display:flex;gap:10px;padding:10px;overflow-x:auto;}
-.cat{padding:6px 12px;background:#ddd;border-radius:20px;cursor:pointer;}
-.cat.activa{background:#111827;color:white;}
-
-.contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;padding:15px;}
-
-.producto{background:white;border-radius:12px;overflow:hidden;}
-.producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
-
-.info{padding:10px;}
-.precio{color:red;font-weight:bold;}
-.stock{color:green;font-size:13px;}
-.agotado{color:red;font-weight:bold;}
-
-button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;}
-.add{background:orange;}
-.wa{background:green;color:white;}
-.del{background:red;color:white;}
-.qty{background:#ddd;}
-.disabled{background:#ccc;cursor:not-allowed;}
-
-#carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:10px;border-radius:20px;}
-
-#carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:white;padding:10px;transition:.3s;overflow:auto;}
-#carrito.active{right:0;}
-
-.total{font-weight:bold;margin-top:10px;font-size:18px;}
-
-#pagoInfo{display:none;margin-top:10px;padding:10px;background:#f1f5f9;border-radius:8px;}
-
 #admin{display:none;background:white;margin:10px;padding:10px;}
+#ventas{display:none;background:white;margin:10px;padding:10px;border-radius:10px;}
 
-#modal{
-display:none;
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.8);
-justify-content:center;
-align-items:center;
-}
-#modal img{max-width:90%;max-height:90%;}
-
-#reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
-.res{border-bottom:1px solid #eee;padding:8px 0;}
+.total{font-weight:bold;margin-top:10px;}
 </style>
 </head>
 
@@ -61,57 +19,24 @@ align-items:center;
 
 <header>Encanto Ventas Pasto</header>
 
-<input id="buscador" placeholder="Buscar..." onkeyup="filtrar()">
-
-<div id="categorias"></div>
-
 <div id="admin">
+<h3>Agregar producto</h3>
 <input id="nombre" placeholder="Nombre">
 <input id="precio" placeholder="Precio">
 <input id="imagen" placeholder="URL imagen">
-<input id="descripcion" placeholder="Descripción">
-<input id="talla" placeholder="Talla">
-<input id="color" placeholder="Color">
-<input id="categoria" placeholder="Categoría">
 <input id="stock" placeholder="Stock">
 <button onclick="agregar()">Agregar</button>
 </div>
 
-<div id="carritoBtn" onclick="toggleCarrito()">🛒 (0)</div>
-
-<div id="carrito">
-<button onclick="toggleCarrito()">Cerrar</button>
-<h3>Carrito</h3>
-
-<div id="items"></div>
-
-<div class="total" id="total">Total: $0</div>
-
-<div id="pagoInfo">
-💳 Nequi: <b>3187446036</b>
-</div>
-
-<button class="add" onclick="pagar()">Finalizar compra</button>
-</div>
-
-<div class="contenedor" id="lista"></div>
-
-<div id="modal" onclick="cerrarModal()">
-<img id="imgModal">
-</div>
-
-<div id="reseñas">
-<h3>⭐ Opiniones</h3>
-<div id="listaReseñas"></div>
-<input id="nombreReseña" placeholder="Tu nombre">
-<input id="textoReseña" placeholder="Tu comentario">
-<button onclick="agregarReseña()">Enviar</button>
+<div id="ventas">
+<h3>📊 Ventas</h3>
+<div id="listaVentas"></div>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } 
+import { getFirestore, collection, addDoc, onSnapshot } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
@@ -122,215 +47,46 @@ projectId:"catalogo-digital-4a956"
 
 const db=getFirestore(app);
 
-let productos=[];
-let carrito=[];
-let categoriaActiva="";
-
-if(localStorage.getItem("carrito")){
-carrito = JSON.parse(localStorage.getItem("carrito"));
-}
-
+/* ADMIN */
 if(new URLSearchParams(location.search).get("admin")==="1234"){
 admin.style.display="block";
+ventas.style.display="block";
 }
 
+/* AGREGAR PRODUCTO */
 window.agregar=async()=>{
 await addDoc(collection(db,"productos"),{
 nombre:nombre.value,
 precio:precio.value,
 imagen:imagen.value,
-descripcion:descripcion.value,
-talla:talla.value,
-color:color.value,
-categoria:categoria.value,
 stock:parseInt(stock.value)||0
 });
 }
 
-onSnapshot(collection(db,"productos"),(snap)=>{
-productos=[];
-let cats=new Set();
+/* 🔥 VER VENTAS */
+onSnapshot(collection(db,"ventas"),(snap)=>{
+listaVentas.innerHTML="";
 
-snap.forEach(docu=>{
-let p=docu.data();
-productos.push({id:docu.id,...p});
-if(p.categoria)cats.add(p.categoria);
-});
-
-crearCategorias([...cats]);
-mostrar(productos);
-});
-
-function crearCategorias(lista){
-categorias.innerHTML=`<div class="cat activa" onclick="filtrarCategoria('')">Todos</div>`;
-lista.forEach(c=>{
-categorias.innerHTML+=`<div class="cat" onclick="filtrarCategoria('${c}')">${c}</div>`;
-});
-}
-
-function mostrar(lista){
-let cont=document.getElementById("lista");
-cont.innerHTML="";
-
-lista.forEach(p=>{
-
-let agotado = p.stock<=0;
-
-cont.innerHTML+=`
-<div class="producto">
-<img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
-<div class="info">
-<b>${p.nombre}</b>
-<p class="precio">$${p.precio}</p>
-<p>${p.descripcion||""}</p>
-
-${agotado ? `<p class="agotado">AGOTADO</p>` : `<p class="stock">Stock: ${p.stock}</p>`}
-
-<button class="add ${agotado?'disabled':''}" ${agotado?'disabled':''}
-onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
-
-<button class="wa" onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">WhatsApp</button>
-</div>
-</div>
-`;
-});
-}
-
-window.verImagen=(url)=>{modal.style.display="flex";imgModal.src=url;}
-window.cerrarModal=()=>modal.style.display="none";
-
-window.filtrar=()=>{
-let t=buscador.value.toLowerCase();
-let f=productos.filter(p=>p.nombre.toLowerCase().includes(t));
-if(categoriaActiva){f=f.filter(p=>p.categoria===categoriaActiva);}
-mostrar(f);
-}
-window.filtrarCategoria=(cat)=>{categoriaActiva=cat;filtrar();}
-
-/* CARRITO */
-window.agregarCarrito=(p)=>{
-let existe=carrito.find(x=>x.id===p.id);
-
-if(existe){
-if(existe.cantidad >= p.stock){
-alert("No hay más stock disponible");
-return;
-}
-existe.cantidad++;
-}else{
-p.cantidad=1;
-carrito.push(p);
-}
-
-guardarCarrito();
-renderCarrito();
-carrito.classList.add("active");
-}
-
-function renderCarrito(){
-items.innerHTML="";
-let totalCalc=0;
-
-carrito.forEach((p,i)=>{
-totalCalc+=p.precio*p.cantidad;
-
-let d=document.createElement("div");
-d.innerHTML=`
-<p>${p.nombre} ($${p.precio})</p>
-<button class="qty">-</button> ${p.cantidad} <button class="qty">+</button>
-<button class="del">Quitar</button>
-`;
-
-let btns=d.querySelectorAll("button");
-
-btns[0].onclick=()=>{
-if(p.cantidad>1)p.cantidad--;
-guardarCarrito();
-renderCarrito();
-}
-
-btns[1].onclick=()=>{
-if(p.cantidad < p.stock){
-p.cantidad++;
-guardarCarrito();
-renderCarrito();
-}else{
-alert("Stock máximo alcanzado");
-}
-}
-
-btns[2].onclick=()=>eliminar(i);
-
-items.appendChild(d);
-});
-
-document.getElementById("total").innerText="Total: $"+totalCalc;
-carritoBtn.innerText="🛒 ("+carrito.length+")";
-}
-
-function guardarCarrito(){
-localStorage.setItem("carrito", JSON.stringify(carrito));
-}
-
-window.eliminar=(i)=>{
-carrito.splice(i,1);
-guardarCarrito();
-renderCarrito();
-}
-
-window.toggleCarrito=()=>{
-document.getElementById("carrito").classList.toggle("active");
-}
-
-/* PAGAR */
-window.pagar=async()=>{
-if(carrito.length===0){alert("Carrito vacío");return;}
-
-pagoInfo.style.display="block";
-
-for(let p of carrito){
-if(p.cantidad > p.stock){
-alert("Stock insuficiente en "+p.nombre);
-return;
-}
-
-await updateDoc(doc(db,"productos",p.id),{
-stock: p.stock - p.cantidad
-});
-}
-
-let txt="Hola quiero comprar:\n\n";
-carrito.forEach(p=>{
-txt+=`- ${p.nombre} x${p.cantidad}\n`;
-});
-
-txt+="\n"+total.innerText;
-window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
-
-carrito=[];
-guardarCarrito();
-renderCarrito();
-}
-
-/* RESEÑAS */
-window.agregarReseña=async()=>{
-await addDoc(collection(db,"reseñas"),{
-nombre:nombreReseña.value,
-texto:textoReseña.value
-});
-}
-
-onSnapshot(collection(db,"reseñas"),(snap)=>{
-listaReseñas.innerHTML="";
 snap.forEach(doc=>{
-let r=doc.data();
-listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
-});
+let v=doc.data();
+
+let html=`
+<div style="border-bottom:1px solid #ddd;margin-bottom:10px;">
+<b>Fecha:</b> ${v.fecha}<br>
+<b>Total:</b> $${v.total}<br>
+`;
+
+v.productos.forEach(p=>{
+html+=`- ${p.nombre} x${p.cantidad}<br>`;
 });
 
-renderCarrito();
+html+=`</div>`;
+
+listaVentas.innerHTML+=html;
+});
+});
 
 </script>
 
 </body>
-</html>
+</html> 
