@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -16,19 +16,16 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   border:1px solid #ccc;
 }
 
-/* ⭐ reseñas */
-#reseñas{
+/* ADMIN */
+#admin{
+  display:none;
   background:white;
   margin:10px;
   padding:10px;
   border-radius:10px;
 }
 
-.res{
-  border-bottom:1px solid #eee;
-  padding:5px 0;
-}
-
+/* PRODUCTOS */
 .contenedor{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -41,6 +38,7 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
 
 .info{padding:10px;}
 .precio{color:#b12704;font-weight:bold;}
+.detalle{font-size:13px;color:#555;}
 
 button{
   width:100%;
@@ -74,8 +72,20 @@ button{
   padding:15px;
   transition:0.3s;
 }
-
 #carrito.active{right:0;}
+
+/* RESEÑAS ABAJO */
+#reseñas{
+  background:white;
+  margin:20px;
+  padding:15px;
+  border-radius:10px;
+}
+
+.res{
+  border-bottom:1px solid #eee;
+  padding:8px 0;
+}
 </style>
 </head>
 
@@ -85,14 +95,16 @@ button{
 
 <input id="buscador" placeholder="🔍 Buscar producto..." onkeyup="filtrar()">
 
-<!-- ⭐ RESEÑAS -->
-<div id="reseñas">
-  <h3>⭐ Opiniones de clientes</h3>
-  <div id="listaReseñas"></div>
-
-  <input id="nombreReseña" placeholder="Tu nombre">
-  <input id="textoReseña" placeholder="Tu opinión">
-  <button onclick="agregarReseña()">Enviar reseña</button>
+<!-- 🛠 ADMIN -->
+<div id="admin">
+  <h3>Admin</h3>
+  <input id="nombre" placeholder="Nombre"><br>
+  <input id="precio" placeholder="Precio"><br>
+  <input id="imagen" placeholder="URL imagen"><br>
+  <input id="descripcion" placeholder="Descripción"><br>
+  <input id="talla" placeholder="Talla"><br>
+  <input id="color" placeholder="Color"><br>
+  <button onclick="agregar()">Agregar producto</button>
 </div>
 
 <div id="carritoBtn" onclick="toggleCarrito()">🛒 (0)</div>
@@ -105,6 +117,16 @@ button{
 </div>
 
 <div class="contenedor" id="lista"></div>
+
+<!-- ⭐ RESEÑAS ABAJO -->
+<div id="reseñas">
+  <h3>⭐ Opiniones</h3>
+  <div id="listaReseñas"></div>
+
+  <input id="nombreReseña" placeholder="Tu nombre">
+  <input id="textoReseña" placeholder="Tu opinión">
+  <button onclick="agregarReseña()">Enviar reseña</button>
+</div>
 
 <script type="module">
 
@@ -123,7 +145,25 @@ const db = getFirestore(app);
 let productos=[];
 let carrito=[];
 
-/* PRODUCTOS */
+/* 🔑 ADMIN ACTIVAR */
+const esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
+if(esAdmin){
+  document.getElementById("admin").style.display="block";
+}
+
+/* ➕ AGREGAR */
+window.agregar = async ()=>{
+  await addDoc(collection(db,"productos"),{
+    nombre:nombre.value,
+    precio:precio.value,
+    imagen:imagen.value,
+    descripcion:descripcion.value,
+    talla:talla.value,
+    color:color.value
+  });
+}
+
+/* 📦 MOSTRAR */
 onSnapshot(collection(db,"productos"),(snap)=>{
   productos=[];
   snap.forEach(doc=>productos.push(doc.data()));
@@ -142,6 +182,10 @@ function mostrar(lista){
           <b>${p.nombre}</b>
           <p class="precio">$${p.precio}</p>
 
+          <p class="detalle">${p.descripcion || ""}</p>
+          <p class="detalle">Talla: ${p.talla || ""}</p>
+          <p class="detalle">Color: ${p.color || ""}</p>
+
           <button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
 
           <button class="wa"
@@ -155,39 +199,27 @@ function mostrar(lista){
 
 /* 🔍 BUSCADOR */
 window.filtrar=()=>{
-  let t=document.getElementById("buscador").value.toLowerCase();
-  let f=productos.filter(p=>p.nombre.toLowerCase().includes(t));
-  mostrar(f);
+  let t=buscador.value.toLowerCase();
+  mostrar(productos.filter(p=>p.nombre.toLowerCase().includes(t)));
 }
 
 /* 🛒 CARRITO */
-window.agregarCarrito=(p)=>{
-  carrito.push(p);
-  render();
-}
+window.agregarCarrito=(p)=>{carrito.push(p);render();}
 
 function render(){
-  let c=document.getElementById("items");
+  let c=items;
   c.innerHTML="";
-
   carrito.forEach((p,i)=>{
     c.innerHTML+=`
-      <p>${p.nombre} - $${p.precio}</p>
+      <p>${p.nombre}</p>
       <button class="del" onclick="eliminar(${i})">Quitar</button>
     `;
   });
-
-  document.getElementById("carritoBtn").innerText="🛒 ("+carrito.length+")";
+  carritoBtn.innerText="🛒 ("+carrito.length+")";
 }
 
-window.eliminar=(i)=>{
-  carrito.splice(i,1);
-  render();
-}
-
-window.toggleCarrito=()=>{
-  document.getElementById("carrito").classList.toggle("active");
-}
+window.eliminar=(i)=>{carrito.splice(i,1);render();}
+window.toggleCarrito=()=>carrito.classList.toggle("active");
 
 window.enviarPedido=()=>{
   let txt="Hola quiero:\n";
@@ -197,11 +229,6 @@ window.enviarPedido=()=>{
 
 /* ⭐ RESEÑAS */
 window.agregarReseña=async ()=>{
-  if(!nombreReseña.value || !textoReseña.value){
-    alert("Completa los campos");
-    return;
-  }
-
   await addDoc(collection(db,"reseñas"),{
     nombre:nombreReseña.value,
     texto:textoReseña.value
@@ -209,21 +236,15 @@ window.agregarReseña=async ()=>{
 }
 
 onSnapshot(collection(db,"reseñas"),(snap)=>{
-  let cont=document.getElementById("listaReseñas");
+  let cont=listaReseñas;
   cont.innerHTML="";
-
   snap.forEach(doc=>{
     let r=doc.data();
-    cont.innerHTML+=`
-      <div class="res">
-        <b>${r.nombre}</b><br>
-        ${r.texto}
-      </div>
-    `;
+    cont.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
   });
 });
 
-/* ZOOM */
+/* 🔍 IMAGEN */
 window.verImagen=(url)=>{
   let w=window.open("");
   w.document.write("<img src='"+url+"' style='width:100%'>");
@@ -232,4 +253,4 @@ window.verImagen=(url)=>{
 </script>
 
 </body>
-</html>
+</html> 
