@@ -9,7 +9,6 @@ body{margin:0;font-family:'Segoe UI';background:#f1f5f9;}
 header{background:#0f172a;color:white;text-align:center;padding:15px;}
 
 #buscador{margin:10px;padding:10px;width:95%;}
-
 #categorias{display:flex;gap:10px;padding:10px;overflow-x:auto;}
 .cat{padding:6px 12px;background:#ddd;border-radius:20px;cursor:pointer;}
 .cat.activa{background:#111827;color:white;}
@@ -22,26 +21,23 @@ header{background:#0f172a;color:white;text-align:center;padding:15px;}
 .info{padding:10px;}
 .precio{color:red;font-weight:bold;}
 .stock{color:green;font-size:13px;}
+.agotado{color:red;font-weight:bold;}
 
 button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;}
 .add{background:orange;}
 .wa{background:green;color:white;}
 .del{background:red;color:white;}
+.qty{background:#ddd;}
+.disabled{background:#ccc;cursor:not-allowed;}
 
 #carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:10px;border-radius:20px;}
 
-#carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:white;padding:10px;transition:.3s;}
+#carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:white;padding:10px;transition:.3s;overflow:auto;}
 #carrito.active{right:0;}
 
 .total{font-weight:bold;margin-top:10px;font-size:18px;}
 
-#pagoInfo{
-display:none;
-margin-top:10px;
-padding:10px;
-background:#f1f5f9;
-border-radius:8px;
-}
+#pagoInfo{display:none;margin-top:10px;padding:10px;background:#f1f5f9;border-radius:8px;}
 
 #admin{display:none;background:white;margin:10px;padding:10px;}
 
@@ -56,6 +52,8 @@ align-items:center;
 }
 #modal img{max-width:90%;max-height:90%;}
 
+#reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
+.res{border-bottom:1px solid #eee;padding:8px 0;}
 </style>
 </head>
 
@@ -90,18 +88,24 @@ align-items:center;
 <div class="total" id="total">Total: $0</div>
 
 <div id="pagoInfo">
-💳 Paga por Nequi:<br>
-<b>3187446036</b>
+💳 Nequi: <b>3187446036</b>
 </div>
 
 <button class="add" onclick="pagar()">Finalizar compra</button>
-
 </div>
 
 <div class="contenedor" id="lista"></div>
 
 <div id="modal" onclick="cerrarModal()">
 <img id="imgModal">
+</div>
+
+<div id="reseñas">
+<h3>⭐ Opiniones</h3>
+<div id="listaReseñas"></div>
+<input id="nombreReseña" placeholder="Tu nombre">
+<input id="textoReseña" placeholder="Tu comentario">
+<button onclick="agregarReseña()">Enviar</button>
 </div>
 
 <script type="module">
@@ -122,17 +126,14 @@ let productos=[];
 let carrito=[];
 let categoriaActiva="";
 
-/* CARGAR CARRITO */
 if(localStorage.getItem("carrito")){
 carrito = JSON.parse(localStorage.getItem("carrito"));
 }
 
-/* ADMIN */
 if(new URLSearchParams(location.search).get("admin")==="1234"){
-document.getElementById("admin").style.display="block";
+admin.style.display="block";
 }
 
-/* AGREGAR */
 window.agregar=async()=>{
 await addDoc(collection(db,"productos"),{
 nombre:nombre.value,
@@ -146,7 +147,6 @@ stock:parseInt(stock.value)||0
 });
 }
 
-/* CARGAR PRODUCTOS (CON ID) */
 onSnapshot(collection(db,"productos"),(snap)=>{
 productos=[];
 let cats=new Set();
@@ -161,21 +161,21 @@ crearCategorias([...cats]);
 mostrar(productos);
 });
 
-/* CATEGORÍAS */
 function crearCategorias(lista){
-let cont=document.getElementById("categorias");
-cont.innerHTML=`<div class="cat activa" onclick="filtrarCategoria('')">Todos</div>`;
+categorias.innerHTML=`<div class="cat activa" onclick="filtrarCategoria('')">Todos</div>`;
 lista.forEach(c=>{
-cont.innerHTML+=`<div class="cat" onclick="filtrarCategoria('${c}')">${c}</div>`;
+categorias.innerHTML+=`<div class="cat" onclick="filtrarCategoria('${c}')">${c}</div>`;
 });
 }
 
-/* MOSTRAR */
 function mostrar(lista){
 let cont=document.getElementById("lista");
 cont.innerHTML="";
 
 lista.forEach(p=>{
+
+let agotado = p.stock<=0;
+
 cont.innerHTML+=`
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
@@ -183,9 +183,12 @@ cont.innerHTML+=`
 <b>${p.nombre}</b>
 <p class="precio">$${p.precio}</p>
 <p>${p.descripcion||""}</p>
-<p class="stock">Stock: ${p.stock||0}</p>
 
-<button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
+${agotado ? `<p class="agotado">AGOTADO</p>` : `<p class="stock">Stock: ${p.stock}</p>`}
+
+<button class="add ${agotado?'disabled':''}" ${agotado?'disabled':''}
+onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
+
 <button class="wa" onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">WhatsApp</button>
 </div>
 </div>
@@ -193,61 +196,78 @@ cont.innerHTML+=`
 });
 }
 
-/* MODAL */
-window.verImagen=(url)=>{
-modal.style.display="flex";
-imgModal.src=url;
-}
-window.cerrarModal=()=>{
-modal.style.display="none";
-}
+window.verImagen=(url)=>{modal.style.display="flex";imgModal.src=url;}
+window.cerrarModal=()=>modal.style.display="none";
 
-/* FILTRO */
 window.filtrar=()=>{
 let t=buscador.value.toLowerCase();
 let f=productos.filter(p=>p.nombre.toLowerCase().includes(t));
-if(categoriaActiva){
-f=f.filter(p=>p.categoria===categoriaActiva);
-}
+if(categoriaActiva){f=f.filter(p=>p.categoria===categoriaActiva);}
 mostrar(f);
 }
-
-window.filtrarCategoria=(cat)=>{
-categoriaActiva=cat;
-filtrar();
-}
+window.filtrarCategoria=(cat)=>{categoriaActiva=cat;filtrar();}
 
 /* CARRITO */
 window.agregarCarrito=(p)=>{
-if(p.stock<=0){alert("Sin stock");return;}
+let existe=carrito.find(x=>x.id===p.id);
 
+if(existe){
+if(existe.cantidad >= p.stock){
+alert("No hay más stock disponible");
+return;
+}
+existe.cantidad++;
+}else{
+p.cantidad=1;
 carrito.push(p);
+}
 
 guardarCarrito();
 renderCarrito();
-
-document.getElementById("carrito").classList.add("active");
+carrito.classList.add("active");
 }
 
 function renderCarrito(){
 items.innerHTML="";
-let total=0;
+let totalCalc=0;
 
 carrito.forEach((p,i)=>{
-total+=parseFloat(p.precio)||0;
+totalCalc+=p.precio*p.cantidad;
 
 let d=document.createElement("div");
-d.innerHTML=`<p>${p.nombre} - $${p.precio}</p><button class="del">Quitar</button>`;
-d.querySelector("button").onclick=()=>eliminar(i);
+d.innerHTML=`
+<p>${p.nombre} ($${p.precio})</p>
+<button class="qty">-</button> ${p.cantidad} <button class="qty">+</button>
+<button class="del">Quitar</button>
+`;
+
+let btns=d.querySelectorAll("button");
+
+btns[0].onclick=()=>{
+if(p.cantidad>1)p.cantidad--;
+guardarCarrito();
+renderCarrito();
+}
+
+btns[1].onclick=()=>{
+if(p.cantidad < p.stock){
+p.cantidad++;
+guardarCarrito();
+renderCarrito();
+}else{
+alert("Stock máximo alcanzado");
+}
+}
+
+btns[2].onclick=()=>eliminar(i);
 
 items.appendChild(d);
 });
 
-document.getElementById("total").innerText="Total: $"+total;
+document.getElementById("total").innerText="Total: $"+totalCalc;
 carritoBtn.innerText="🛒 ("+carrito.length+")";
 }
 
-/* GUARDAR */
 function guardarCarrito(){
 localStorage.setItem("carrito", JSON.stringify(carrito));
 }
@@ -262,44 +282,52 @@ window.toggleCarrito=()=>{
 document.getElementById("carrito").classList.toggle("active");
 }
 
-/* 🟢 PAGAR + DESCONTAR STOCK REAL */
+/* PAGAR */
 window.pagar=async()=>{
+if(carrito.length===0){alert("Carrito vacío");return;}
 
-if(carrito.length===0){
-alert("Carrito vacío");
+pagoInfo.style.display="block";
+
+for(let p of carrito){
+if(p.cantidad > p.stock){
+alert("Stock insuficiente en "+p.nombre);
 return;
 }
 
-document.getElementById("pagoInfo").style.display="block";
-
-/* DESCONTAR EN FIREBASE */
-for(let p of carrito){
-if(p.id){
 await updateDoc(doc(db,"productos",p.id),{
-stock: (p.stock||0) - 1
+stock: p.stock - p.cantidad
 });
 }
-}
 
-/* MENSAJE */
 let txt="Hola quiero comprar:\n\n";
-
 carrito.forEach(p=>{
-txt+="- "+p.nombre+" $"+p.precio+"\n";
+txt+=`- ${p.nombre} x${p.cantidad}\n`;
 });
 
-txt+="\n"+document.getElementById("total").innerText;
-txt+="\n\nYa realicé el pago por Nequi";
-
+txt+="\n"+total.innerText;
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
 
-/* LIMPIAR CARRITO */
 carrito=[];
 guardarCarrito();
 renderCarrito();
 }
 
-/* INICIO */
+/* RESEÑAS */
+window.agregarReseña=async()=>{
+await addDoc(collection(db,"reseñas"),{
+nombre:nombreReseña.value,
+texto:textoReseña.value
+});
+}
+
+onSnapshot(collection(db,"reseñas"),(snap)=>{
+listaReseñas.innerHTML="";
+snap.forEach(doc=>{
+let r=doc.data();
+listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
+});
+});
+
 renderCarrito();
 
 </script>
