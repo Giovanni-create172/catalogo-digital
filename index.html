@@ -8,14 +8,7 @@
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;}
 header{background:#0f172a;color:white;text-align:center;padding:15px;}
 
-#buscador{
-width:90%;
-margin:10px auto;
-display:block;
-padding:10px;
-border-radius:10px;
-border:1px solid #ccc;
-}
+#buscador{width:90%;margin:10px auto;display:block;padding:10px;border-radius:10px;border:1px solid #ccc;}
 
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;padding:15px;}
 
@@ -28,21 +21,16 @@ border:1px solid #ccc;
 button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;}
 .add{background:orange;}
 .wa{background:green;color:white;}
+.agotado{background:gray;color:white;cursor:not-allowed;}
 
 #carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:12px;border-radius:25px;}
 
-#carrito{
-position:fixed;right:-100%;top:0;width:300px;height:100%;
-background:white;padding:10px;transition:.3s;overflow:auto;
-}
+#carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:white;padding:10px;transition:.3s;overflow:auto;}
 #carrito.active{right:0;}
 
 .total{font-weight:bold;margin-top:10px;}
 
-#modal{
-display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
-}
+#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;}
 #modal img{max-width:90%;max-height:90%;}
 
 #admin{display:none;background:white;margin:10px;padding:10px;}
@@ -56,10 +44,8 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 
 <header>Encanto Ventas Pasto</header>
 
-<!-- 🔎 BUSCADOR -->
 <input id="buscador" placeholder="Buscar productos..." onkeyup="filtrar()">
 
-<!-- ADMIN -->
 <div id="admin">
 <h3>Agregar producto</h3>
 <input id="nombre" placeholder="Nombre">
@@ -70,7 +56,6 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 <button onclick="agregar()">Agregar</button>
 </div>
 
-<!-- CARRITO -->
 <div id="carritoBtn" onclick="toggleCarrito()">🛒</div>
 
 <div id="carrito">
@@ -80,23 +65,17 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 <button onclick="pagar()">Finalizar compra</button>
 </div>
 
-<!-- PRODUCTOS -->
 <div class="contenedor" id="lista"></div>
 
-<!-- MODAL -->
 <div id="modal" onclick="cerrarModal()">
 <img id="imgModal">
 </div>
 
-<!-- RESEÑAS -->
 <div id="reseñas">
 <h3>⭐ Opiniones</h3>
-
 <div id="listaReseñas"></div>
-
 <input id="nombreReseña" placeholder="Tu nombre">
 <input id="textoReseña" placeholder="Comentario">
-
 <button onclick="agregarReseña()">Enviar</button>
 </div>
 
@@ -115,14 +94,14 @@ projectId:"catalogo-digital-4a956"
 const db = getFirestore(app);
 
 let productos = [];
-let carrito = [];
+let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
 
 /* ADMIN */
 if(new URLSearchParams(location.search).get("admin")==="1234"){
 document.getElementById("admin").style.display="block";
 }
 
-/* AGREGAR PRODUCTO */
+/* AGREGAR */
 window.agregar = async ()=>{
 await addDoc(collection(db,"productos"),{
 nombre:nombre.value,
@@ -133,13 +112,14 @@ stock:Number(stock.value)
 });
 }
 
-/* CARGAR PRODUCTOS */
+/* CARGAR */
 onSnapshot(collection(db,"productos"),(snap)=>{
 productos = [];
 snap.forEach(docu=>{
 productos.push({id:docu.id,...docu.data()});
 });
 mostrar(productos);
+renderCarrito();
 });
 
 /* MOSTRAR */
@@ -148,6 +128,11 @@ const cont = document.getElementById("lista");
 cont.innerHTML = "";
 
 listaMostrar.forEach((p,i)=>{
+
+let boton = p.stock<=0
+? `<button class="agotado">AGOTADO</button>`
+: `<button class="add" onclick="agregarCarrito(${i})">Agregar</button>`;
+
 cont.innerHTML += `
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
@@ -157,7 +142,7 @@ cont.innerHTML += `
 <p>${p.descripcion||""}</p>
 <p>Stock: ${p.stock}</p>
 
-<button class="add" onclick="agregarCarrito(${i})">Agregar</button>
+${boton}
 <button class="wa" onclick="whatsapp(${i})">WhatsApp</button>
 
 </div>
@@ -165,15 +150,13 @@ cont.innerHTML += `
 });
 }
 
-/* 🔎 FILTRAR */
+/* BUSCAR */
 window.filtrar = ()=>{
-let texto = document.getElementById("buscador").value.toLowerCase();
-
+let texto = buscador.value.toLowerCase();
 let filtrados = productos.filter(p =>
 (p.nombre||"").toLowerCase().includes(texto) ||
 (p.descripcion||"").toLowerCase().includes(texto)
 );
-
 mostrar(filtrados);
 }
 
@@ -187,6 +170,8 @@ window.cerrarModal = ()=>modal.style.display="none";
 /* CARRITO */
 window.agregarCarrito = (i)=>{
 let p = productos[i];
+if(p.stock<=0) return;
+
 let existe = carrito.find(x=>x.id===p.id);
 
 if(existe){
@@ -195,6 +180,8 @@ else return alert("Sin stock");
 }else{
 carrito.push({...p,cantidad:1});
 }
+
+guardarCarrito();
 renderCarrito();
 }
 
@@ -218,16 +205,22 @@ ${p.nombre} x${p.cantidad}
 document.getElementById("total").innerText = "Total: $" + total;
 }
 
+function guardarCarrito(){
+localStorage.setItem("carrito",JSON.stringify(carrito));
+}
+
 window.cambiar = (i,val)=>{
 let p = carrito[i];
 if(p.cantidad+val<=0) return;
 if(p.cantidad+val>p.stock) return alert("Stock máximo");
 p.cantidad+=val;
+guardarCarrito();
 renderCarrito();
 }
 
 window.eliminar = (i)=>{
 carrito.splice(i,1);
+guardarCarrito();
 renderCarrito();
 }
 
@@ -269,6 +262,7 @@ stock: p.stock - p.cantidad
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 
 carrito=[];
+guardarCarrito();
 renderCarrito();
 }
 
