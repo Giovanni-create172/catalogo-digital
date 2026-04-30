@@ -16,7 +16,6 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   border:1px solid #ccc;
 }
 
-/* ADMIN */
 #admin{
   display:none;
   background:white;
@@ -25,7 +24,6 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   border-radius:10px;
 }
 
-/* PRODUCTOS */
 .contenedor{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -34,7 +32,7 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
 }
 
 .producto{background:white;border-radius:12px;}
-.producto img{width:100%;height:200px;object-fit:cover;}
+.producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
 
 .info{padding:10px;}
 .precio{color:#b12704;font-weight:bold;}
@@ -60,6 +58,7 @@ button{
   color:white;
   padding:10px;
   border-radius:20px;
+  cursor:pointer;
 }
 
 #carrito{
@@ -71,21 +70,17 @@ button{
   background:white;
   padding:15px;
   transition:0.3s;
+  overflow:auto;
 }
 #carrito.active{right:0;}
 
-/* RESEÑAS ABAJO */
 #reseñas{
   background:white;
   margin:20px;
   padding:15px;
   border-radius:10px;
 }
-
-.res{
-  border-bottom:1px solid #eee;
-  padding:8px 0;
-}
+.res{border-bottom:1px solid #eee;padding:8px 0;}
 </style>
 </head>
 
@@ -95,7 +90,7 @@ button{
 
 <input id="buscador" placeholder="🔍 Buscar producto..." onkeyup="filtrar()">
 
-<!-- 🛠 ADMIN -->
+<!-- ADMIN -->
 <div id="admin">
   <h3>Admin</h3>
   <input id="nombre" placeholder="Nombre"><br>
@@ -118,7 +113,7 @@ button{
 
 <div class="contenedor" id="lista"></div>
 
-<!-- ⭐ RESEÑAS ABAJO -->
+<!-- RESEÑAS -->
 <div id="reseñas">
   <h3>⭐ Opiniones</h3>
   <div id="listaReseñas"></div>
@@ -145,13 +140,13 @@ const db = getFirestore(app);
 let productos=[];
 let carrito=[];
 
-/* 🔑 ADMIN ACTIVAR */
+/* ADMIN */
 const esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
 if(esAdmin){
   document.getElementById("admin").style.display="block";
 }
 
-/* ➕ AGREGAR */
+/* AGREGAR */
 window.agregar = async ()=>{
   await addDoc(collection(db,"productos"),{
     nombre:nombre.value,
@@ -163,7 +158,7 @@ window.agregar = async ()=>{
   });
 }
 
-/* 📦 MOSTRAR */
+/* MOSTRAR */
 onSnapshot(collection(db,"productos"),(snap)=>{
   productos=[];
   snap.forEach(doc=>productos.push(doc.data()));
@@ -197,29 +192,40 @@ function mostrar(lista){
   });
 }
 
-/* 🔍 BUSCADOR */
+/* BUSCADOR */
 window.filtrar=()=>{
-  let t=buscador.value.toLowerCase();
+  let t=document.getElementById("buscador").value.toLowerCase();
   mostrar(productos.filter(p=>p.nombre.toLowerCase().includes(t)));
 }
 
-/* 🛒 CARRITO */
-window.agregarCarrito=(p)=>{carrito.push(p);render();}
+/* CARRITO */
+window.agregarCarrito=(p)=>{
+  carrito.push(p);
+  renderCarrito();
+}
 
-function render(){
-  let c=items;
+function renderCarrito(){
+  let c = document.getElementById("items");
   c.innerHTML="";
+
   carrito.forEach((p,i)=>{
     c.innerHTML+=`
-      <p>${p.nombre}</p>
+      <p>${p.nombre} - $${p.precio}</p>
       <button class="del" onclick="eliminar(${i})">Quitar</button>
     `;
   });
-  carritoBtn.innerText="🛒 ("+carrito.length+")";
+
+  document.getElementById("carritoBtn").innerText="🛒 ("+carrito.length+")";
 }
 
-window.eliminar=(i)=>{carrito.splice(i,1);render();}
-window.toggleCarrito=()=>carrito.classList.toggle("active");
+window.eliminar=(i)=>{
+  carrito.splice(i,1);
+  renderCarrito();
+}
+
+window.toggleCarrito = () => {
+  document.getElementById("carrito").classList.toggle("active");
+}
 
 window.enviarPedido=()=>{
   let txt="Hola quiero:\n";
@@ -227,7 +233,7 @@ window.enviarPedido=()=>{
   window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
 }
 
-/* ⭐ RESEÑAS */
+/* RESEÑAS */
 window.agregarReseña=async ()=>{
   await addDoc(collection(db,"reseñas"),{
     nombre:nombreReseña.value,
@@ -236,7 +242,7 @@ window.agregarReseña=async ()=>{
 }
 
 onSnapshot(collection(db,"reseñas"),(snap)=>{
-  let cont=listaReseñas;
+  let cont=document.getElementById("listaReseñas");
   cont.innerHTML="";
   snap.forEach(doc=>{
     let r=doc.data();
@@ -244,7 +250,7 @@ onSnapshot(collection(db,"reseñas"),(snap)=>{
   });
 });
 
-/* 🔍 IMAGEN */
+/* ZOOM */
 window.verImagen=(url)=>{
   let w=window.open("");
   w.document.write("<img src='"+url+"' style='width:100%'>");
