@@ -1,19 +1,34 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <title>Encanto Ventas Pasto</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f4f6f8;}
-header{background:#111827;color:white;text-align:center;padding:15px;font-weight:bold;}
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f1f5f9;
+}
 
+/* HEADER */
+header{
+  background:#0f172a;
+  color:white;
+  text-align:center;
+  padding:18px;
+  font-size:20px;
+  letter-spacing:1px;
+}
+
+/* BUSCADOR */
 #buscador{
-  margin:10px;
-  padding:10px;
+  margin:15px;
+  padding:12px;
   width:calc(100% - 40px);
-  border-radius:8px;
-  border:1px solid #ccc;
+  border-radius:10px;
+  border:none;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 /* CATEGORÍAS */
@@ -24,79 +39,125 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   overflow-x:auto;
 }
 .cat{
-  padding:8px 12px;
-  background:#ddd;
-  border-radius:20px;
-  cursor:pointer;
-  white-space:nowrap;
-}
-.cat.activa{background:#111827;color:white;}
-
-#admin{
-  display:none;
+  padding:8px 14px;
   background:white;
-  margin:10px;
-  padding:10px;
-  border-radius:10px;
+  border-radius:20px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  cursor:pointer;
+  font-size:14px;
+}
+.cat.activa{
+  background:#0f172a;
+  color:white;
 }
 
+/* GRID */
 .contenedor{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:15px;
+  gap:18px;
   padding:15px;
 }
 
-.producto{background:white;border-radius:12px;}
-.producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
+/* CARD PRODUCTO */
+.producto{
+  background:white;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 5px 15px rgba(0,0,0,0.08);
+  transition:0.2s;
+}
+.producto:hover{
+  transform:scale(1.02);
+}
 
-.info{padding:10px;}
-.precio{color:#b12704;font-weight:bold;}
-.detalle{font-size:13px;color:#555;}
+.producto img{
+  width:100%;
+  height:200px;
+  object-fit:cover;
+}
 
+.info{
+  padding:12px;
+}
+
+.precio{
+  color:#dc2626;
+  font-weight:bold;
+  font-size:18px;
+}
+
+.detalle{
+  font-size:13px;
+  color:#64748b;
+}
+
+/* BOTONES */
 button{
   width:100%;
   padding:10px;
-  margin-top:5px;
+  margin-top:6px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
+  font-weight:bold;
   cursor:pointer;
 }
 
-.add{background:#f59e0b;}
-.wa{background:#25d366;color:white;}
+.add{background:#f59e0b;color:white;}
+.wa{background:#22c55e;color:white;}
 .del{background:#ef4444;color:white;}
 
+/* CARRITO */
 #carritoBtn{
   position:fixed;
-  top:20px;
+  bottom:20px;
   right:20px;
-  background:#111827;
+  background:#0f172a;
   color:white;
-  padding:10px;
-  border-radius:20px;
+  padding:12px 18px;
+  border-radius:25px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
 }
 
 #carrito{
   position:fixed;
   right:-100%;
   top:0;
-  width:300px;
+  width:320px;
   height:100%;
   background:white;
   padding:15px;
   transition:0.3s;
   overflow:auto;
+  box-shadow:-4px 0 10px rgba(0,0,0,0.2);
 }
 #carrito.active{right:0;}
 
+/* ADMIN */
+#admin{
+  display:none;
+  background:white;
+  margin:15px;
+  padding:12px;
+  border-radius:12px;
+}
+#admin input{
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+}
+
+/* RESEÑAS */
 #reseñas{
   background:white;
   margin:20px;
   padding:15px;
-  border-radius:10px;
+  border-radius:12px;
 }
-.res{border-bottom:1px solid #eee;padding:8px 0;}
+.res{
+  border-bottom:1px solid #eee;
+  padding:8px 0;
+}
 </style>
 </head>
 
@@ -106,21 +167,17 @@ button{
 
 <input id="buscador" placeholder="🔍 Buscar producto..." onkeyup="filtrar()">
 
-<!-- CATEGORÍAS -->
-<div id="categorias">
-  <div class="cat activa" onclick="filtrarCategoria('')">Todos</div>
-</div>
+<div id="categorias"></div>
 
-<!-- ADMIN -->
 <div id="admin">
   <h3>Admin</h3>
-  <input id="nombre" placeholder="Nombre"><br>
-  <input id="precio" placeholder="Precio"><br>
-  <input id="imagen" placeholder="URL imagen"><br>
-  <input id="descripcion" placeholder="Descripción"><br>
-  <input id="talla" placeholder="Talla"><br>
-  <input id="color" placeholder="Color"><br>
-  <input id="categoria" placeholder="Categoría"><br>
+  <input id="nombre" placeholder="Nombre">
+  <input id="precio" placeholder="Precio">
+  <input id="imagen" placeholder="URL imagen">
+  <input id="descripcion" placeholder="Descripción">
+  <input id="talla" placeholder="Talla">
+  <input id="color" placeholder="Color">
+  <input id="categoria" placeholder="Categoría">
   <button onclick="agregar()">Agregar producto</button>
 </div>
 
@@ -130,16 +187,14 @@ button{
   <button onclick="toggleCarrito()">Cerrar</button>
   <h3>Carrito</h3>
   <div id="items"></div>
-  <button class="wa" onclick="enviarPedido()">Enviar por WhatsApp</button>
+  <button class="wa" onclick="enviarPedido()">Enviar pedido</button>
 </div>
 
 <div class="contenedor" id="lista"></div>
 
-<!-- RESEÑAS -->
 <div id="reseñas">
   <h3>⭐ Opiniones</h3>
   <div id="listaReseñas"></div>
-
   <input id="nombreReseña" placeholder="Tu nombre">
   <input id="textoReseña" placeholder="Tu opinión">
   <button onclick="agregarReseña()">Enviar reseña</button>
@@ -170,7 +225,7 @@ if(esAdmin){
 }
 
 /* AGREGAR */
-window.agregar = async ()=>{
+window.agregar=async()=>{
   await addDoc(collection(db,"productos"),{
     nombre:nombre.value,
     precio:precio.value,
@@ -182,7 +237,7 @@ window.agregar = async ()=>{
   });
 }
 
-/* MOSTRAR + CATEGORÍAS */
+/* CARGAR */
 onSnapshot(collection(db,"productos"),(snap)=>{
   productos=[];
   let cats=new Set();
@@ -200,7 +255,6 @@ onSnapshot(collection(db,"productos"),(snap)=>{
 function crearCategorias(lista){
   let cont=document.getElementById("categorias");
   cont.innerHTML=`<div class="cat activa" onclick="filtrarCategoria('')">Todos</div>`;
-
   lista.forEach(c=>{
     cont.innerHTML+=`<div class="cat" onclick="filtrarCategoria('${c}')">${c}</div>`;
   });
@@ -209,7 +263,6 @@ function crearCategorias(lista){
 function mostrar(lista){
   let cont=document.getElementById("lista");
   cont.innerHTML="";
-
   lista.forEach(p=>{
     cont.innerHTML+=`
       <div class="producto">
@@ -217,17 +270,10 @@ function mostrar(lista){
         <div class="info">
           <b>${p.nombre}</b>
           <p class="precio">$${p.precio}</p>
-
-          <p class="detalle">${p.descripcion || ""}</p>
-          <p class="detalle">Talla: ${p.talla || ""}</p>
-          <p class="detalle">Color: ${p.color || ""}</p>
-          <p class="detalle">Categoría: ${p.categoria || ""}</p>
+          <p class="detalle">${p.descripcion||""}</p>
 
           <button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
-
-          <button class="wa"
-          onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">
-          WhatsApp</button>
+          <button class="wa" onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">WhatsApp</button>
         </div>
       </div>
     `;
@@ -237,21 +283,15 @@ function mostrar(lista){
 /* FILTROS */
 window.filtrar=()=>{
   let t=buscador.value.toLowerCase();
-  let filtrados=productos.filter(p=>p.nombre.toLowerCase().includes(t));
-
+  let f=productos.filter(p=>p.nombre.toLowerCase().includes(t));
   if(categoriaActiva){
-    filtrados=filtrados.filter(p=>p.categoria===categoriaActiva);
+    f=f.filter(p=>p.categoria===categoriaActiva);
   }
-
-  mostrar(filtrados);
+  mostrar(f);
 }
 
 window.filtrarCategoria=(cat)=>{
   categoriaActiva=cat;
-
-  document.querySelectorAll(".cat").forEach(c=>c.classList.remove("activa"));
-  event.target.classList.add("activa");
-
   filtrar();
 }
 
@@ -263,20 +303,17 @@ window.agregarCarrito=(p)=>{
 }
 
 function renderCarrito(){
-  const cont=document.getElementById("items");
+  let cont=document.getElementById("items");
   cont.innerHTML="";
 
   if(carrito.length===0){
-    cont.innerHTML="<p>Carrito vacío</p>";
+    cont.innerHTML="<p>Vacío</p>";
   }else{
     carrito.forEach((p,i)=>{
-      let div=document.createElement("div");
-      div.innerHTML=`
-        <p>${p.nombre} - $${p.precio}</p>
-        <button class="del">Quitar</button>
-      `;
-      div.querySelector("button").onclick=()=>eliminar(i);
-      cont.appendChild(div);
+      let d=document.createElement("div");
+      d.innerHTML=`<p>${p.nombre}</p><button class="del">Quitar</button>`;
+      d.querySelector("button").onclick=()=>eliminar(i);
+      cont.appendChild(d);
     });
   }
 
@@ -299,7 +336,7 @@ window.enviarPedido=()=>{
 }
 
 /* RESEÑAS */
-window.agregarReseña=async ()=>{
+window.agregarReseña=async()=>{
   await addDoc(collection(db,"reseñas"),{
     nombre:nombreReseña.value,
     texto:textoReseña.value
@@ -324,4 +361,4 @@ window.verImagen=(url)=>{
 </script>
 
 </body>
-</html>
+</html> 
