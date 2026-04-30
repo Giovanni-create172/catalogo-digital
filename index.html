@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -9,10 +9,6 @@ body{margin:0;font-family:'Segoe UI';background:#f1f5f9;}
 header{background:#0f172a;color:white;text-align:center;padding:15px;}
 
 #buscador{margin:10px;padding:10px;width:95%;}
-#categorias{display:flex;gap:10px;padding:10px;overflow-x:auto;}
-.cat{padding:6px 12px;background:#ddd;border-radius:20px;cursor:pointer;}
-.cat.activa{background:#111827;color:white;}
-
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;padding:15px;}
 
 .producto{background:white;border-radius:12px;overflow:hidden;}
@@ -23,36 +19,20 @@ header{background:#0f172a;color:white;text-align:center;padding:15px;}
 .stock{color:green;font-size:13px;}
 .agotado{color:red;font-weight:bold;}
 
-button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;}
+button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;}
 .add{background:orange;}
 .wa{background:green;color:white;}
 .del{background:red;color:white;}
-.qty{background:#ddd;}
-.disabled{background:#ccc;cursor:not-allowed;}
 
 #carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:10px;border-radius:20px;}
 #carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:white;padding:10px;transition:.3s;overflow:auto;}
 #carrito.active{right:0;}
 
 .total{font-weight:bold;margin-top:10px;}
-#pagoInfo{display:none;margin-top:10px;padding:10px;background:#eee;}
 
 #admin,#ventas{display:none;background:white;margin:10px;padding:10px;border-radius:10px;}
 
 .card{background:#111827;color:white;padding:10px;border-radius:10px;margin:5px 0;}
-
-#modal{
-display:none;
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.8);
-justify-content:center;
-align-items:center;
-}
-#modal img{max-width:90%;max-height:90%;}
-
-#reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
 </style>
 </head>
 
@@ -61,7 +41,6 @@ align-items:center;
 <header>Encanto Ventas Pasto</header>
 
 <input id="buscador" placeholder="Buscar..." onkeyup="filtrar()">
-<div id="categorias"></div>
 
 <div id="admin">
 <h3>Agregar producto</h3>
@@ -69,7 +48,6 @@ align-items:center;
 <input id="precio" placeholder="Precio">
 <input id="imagen" placeholder="URL imagen">
 <input id="descripcion" placeholder="Descripción">
-<input id="categoria" placeholder="Categoría">
 <input id="stock" placeholder="Stock">
 <button onclick="agregar()">Agregar</button>
 </div>
@@ -77,37 +55,22 @@ align-items:center;
 <div id="ventas">
 <h2>📊 Dashboard</h2>
 <div id="resumen"></div>
-<h3>Historial</h3>
 <div id="listaVentas"></div>
 </div>
 
-<div id="carritoBtn" onclick="toggleCarrito()">🛒 (0)</div>
+<div id="carritoBtn" onclick="toggleCarrito()">🛒</div>
 
 <div id="carrito">
 <button onclick="toggleCarrito()">Cerrar</button>
 <div id="items"></div>
 <div class="total" id="total">Total: $0</div>
 
-<div id="pagoInfo">
-💳 Nequi: <b>3187446036</b>
-</div>
+<div>Nequi: <b>3187446036</b></div>
 
-<button class="add" onclick="pagar()">Finalizar compra</button>
+<button onclick="pagar()">Finalizar compra</button>
 </div>
 
 <div class="contenedor" id="lista"></div>
-
-<div id="modal" onclick="cerrarModal()">
-<img id="imgModal">
-</div>
-
-<div id="reseñas">
-<h3>⭐ Opiniones</h3>
-<div id="listaReseñas"></div>
-<input id="nombreReseña" placeholder="Nombre">
-<input id="textoReseña" placeholder="Comentario">
-<button onclick="agregarReseña()">Enviar</button>
-</div>
 
 <script type="module">
 
@@ -115,17 +78,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp({
+const app=initializeApp({
 apiKey:"AIzaSy",
 authDomain:"catalogo-digital-4a956.firebaseapp.com",
 projectId:"catalogo-digital-4a956"
 });
-
 const db=getFirestore(app);
 
-let productos=[];
-let carrito=[];
-let categoriaActiva="";
+let productos=[],carrito=[];
 
 if(localStorage.getItem("carrito")){
 carrito=JSON.parse(localStorage.getItem("carrito"));
@@ -143,33 +103,29 @@ nombre:nombre.value,
 precio:precio.value,
 imagen:imagen.value,
 descripcion:descripcion.value,
-categoria:categoria.value,
 stock:parseInt(stock.value)||0
 });
 }
 
 onSnapshot(collection(db,"productos"),snap=>{
 productos=[];
-snap.forEach(d=>{
-productos.push({id:d.id,...d.data()});
-});
+snap.forEach(d=>productos.push({id:d.id,...d.data()}));
 mostrar(productos);
 });
 
-/* MOSTRAR */
 function mostrar(lista){
 listaHTML.innerHTML="";
 lista.forEach(p=>{
 let agotado=p.stock<=0;
-
 listaHTML.innerHTML+=`
 <div class="producto">
-<img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
+<img src="${p.imagen}">
 <div class="info">
 <b>${p.nombre}</b>
 <p>$${p.precio}</p>
 ${agotado?'<p class="agotado">AGOTADO</p>':`<p class="stock">Stock:${p.stock}</p>`}
-<button class="add ${agotado?'disabled':''}" ${agotado?'disabled':''} onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
+<button onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
+<button onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">WhatsApp</button>
 </div>
 </div>`;
 });
@@ -180,15 +136,15 @@ window.agregarCarrito=p=>{
 let e=carrito.find(x=>x.id===p.id);
 if(e){
 if(e.cantidad<p.stock)e.cantidad++;
-else alert("Stock máximo");
+else return alert("Sin stock");
 }else{
 p.cantidad=1;
 carrito.push(p);
 }
-guardarCarrito();renderCarrito();
+guardar();render();
 }
 
-function renderCarrito(){
+function render(){
 items.innerHTML="";
 let total=0;
 
@@ -203,39 +159,31 @@ ${p.nombre} x${p.cantidad}
 </div>`;
 });
 
-document.getElementById("total").innerText="Total: $"+total;
+totalHTML.innerText="Total: $"+total;
 }
 
 window.cambiar=(i,v)=>{
 let p=carrito[i];
 if(p.cantidad+v<=0)return;
-if(p.cantidad+v>p.stock)return alert("Sin stock");
-p.cantidad+=v;
-guardarCarrito();renderCarrito();
+if(p.cantidad+v>p.stock)return alert("Stock");
+p.cantidad+=v;guardar();render();
 }
 
 window.eliminar=i=>{
-carrito.splice(i,1);
-guardarCarrito();renderCarrito();
+carrito.splice(i,1);guardar();render();
 }
 
-function guardarCarrito(){
-localStorage.setItem("carrito",JSON.stringify(carrito));
-}
+function guardar(){localStorage.setItem("carrito",JSON.stringify(carrito));}
 
-window.toggleCarrito=()=>{
-carritoDiv.classList.toggle("active");
-}
+window.toggleCarrito=()=>carritoDiv.classList.toggle("active");
 
-/* PAGAR + VENTAS */
+/* PAGAR */
 window.pagar=async()=>{
-if(carrito.length==0)return alert("Vacío");
-
-pagoInfo.style.display="block";
+if(carrito.length==0)return;
 
 await addDoc(collection(db,"ventas"),{
 productos:carrito.map(p=>({nombre:p.nombre,cantidad:p.cantidad})),
-total:parseFloat(total.innerText.replace("Total: $","")),
+total:parseFloat(totalHTML.innerText.replace("Total: $","")),
 fecha:new Date().toLocaleString()
 });
 
@@ -247,23 +195,19 @@ stock:p.stock-p.cantidad
 
 let txt="Pedido:\n";
 carrito.forEach(p=>txt+=`${p.nombre} x${p.cantidad}\n`);
-txt+="\n"+total.innerText;
-
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
 
-carrito=[];guardarCarrito();renderCarrito();
+carrito=[];guardar();render();
 }
 
 /* DASHBOARD */
 onSnapshot(collection(db,"ventas"),snap=>{
 let total=0,pedidos=0,conteo={};
-
 listaVentas.innerHTML="";
 
 snap.forEach(d=>{
 let v=d.data();
-total+=v.total;
-pedidos++;
+total+=v.total;pedidos++;
 
 v.productos.forEach(p=>{
 conteo[p.nombre]=(conteo[p.nombre]||0)+p.cantidad;
@@ -283,32 +227,9 @@ resumen.innerHTML=`
 <div class="card">🔥 ${top}</div>`;
 });
 
-/* RESEÑAS */
-window.agregarReseña=async()=>{
-await addDoc(collection(db,"reseñas"),{
-nombre:nombreReseña.value,
-texto:textoReseña.value
-});
-}
-
-onSnapshot(collection(db,"reseñas"),snap=>{
-listaReseñas.innerHTML="";
-snap.forEach(d=>{
-let r=d.data();
-listaReseñas.innerHTML+=`<div><b>${r.nombre}</b>: ${r.texto}</div>`;
-});
-});
-
-/* OTROS */
-window.verImagen=url=>{
-modal.style.display="flex";
-imgModal.src=url;
-}
-window.cerrarModal=()=>modal.style.display="none";
-
-renderCarrito();
+render();
 
 </script>
 
 </body>
-</html> 
+</html>
