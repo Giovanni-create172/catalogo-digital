@@ -33,10 +33,14 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 #carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:white;padding:10px;transition:.3s;}
 #carrito.active{right:0;}
 
-.total{
-  font-weight:bold;
-  margin-top:10px;
-  font-size:18px;
+.total{font-weight:bold;margin-top:10px;font-size:18px;}
+
+#pagoInfo{
+display:none;
+margin-top:10px;
+padding:10px;
+background:#f1f5f9;
+border-radius:8px;
 }
 
 #admin{display:none;background:white;margin:10px;padding:10px;}
@@ -80,11 +84,18 @@ align-items:center;
 <div id="carrito">
 <button onclick="toggleCarrito()">Cerrar</button>
 <h3>Carrito</h3>
+
 <div id="items"></div>
 
 <div class="total" id="total">Total: $0</div>
 
-<button class="wa" onclick="enviarPedido()">Enviar pedido</button>
+<div id="pagoInfo">
+💳 Paga por Nequi:<br>
+<b>3187446036</b>
+</div>
+
+<button class="add" onclick="pagar()">Finalizar compra</button>
+
 </div>
 
 <div class="contenedor" id="lista"></div>
@@ -96,7 +107,7 @@ align-items:center;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } 
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
@@ -111,9 +122,9 @@ let productos=[];
 let carrito=[];
 let categoriaActiva="";
 
-/* 🟢 CARGAR CARRITO GUARDADO */
+/* CARGAR CARRITO */
 if(localStorage.getItem("carrito")){
-  carrito = JSON.parse(localStorage.getItem("carrito"));
+carrito = JSON.parse(localStorage.getItem("carrito"));
 }
 
 /* ADMIN */
@@ -135,14 +146,14 @@ stock:parseInt(stock.value)||0
 });
 }
 
-/* CARGAR */
+/* CARGAR PRODUCTOS (CON ID) */
 onSnapshot(collection(db,"productos"),(snap)=>{
 productos=[];
 let cats=new Set();
 
-snap.forEach(doc=>{
-let p=doc.data();
-productos.push(p);
+snap.forEach(docu=>{
+let p=docu.data();
+productos.push({id:docu.id,...p});
 if(p.categoria)cats.add(p.categoria);
 });
 
@@ -206,11 +217,10 @@ categoriaActiva=cat;
 filtrar();
 }
 
-/* 🛒 CARRITO */
+/* CARRITO */
 window.agregarCarrito=(p)=>{
 if(p.stock<=0){alert("Sin stock");return;}
 
-p.stock--;
 carrito.push(p);
 
 guardarCarrito();
@@ -252,17 +262,44 @@ window.toggleCarrito=()=>{
 document.getElementById("carrito").classList.toggle("active");
 }
 
-window.enviarPedido=()=>{
-let txt="Hola quiero:\n";
-carrito.forEach(p=>txt+=p.nombre+" - $"+p.precio+"\n");
+/* 🟢 PAGAR + DESCONTAR STOCK REAL */
+window.pagar=async()=>{
 
-let total=document.getElementById("total").innerText;
-txt+="\n"+total;
-
-window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
+if(carrito.length===0){
+alert("Carrito vacío");
+return;
 }
 
-/* 🟢 MOSTRAR CARRITO AL INICIAR */
+document.getElementById("pagoInfo").style.display="block";
+
+/* DESCONTAR EN FIREBASE */
+for(let p of carrito){
+if(p.id){
+await updateDoc(doc(db,"productos",p.id),{
+stock: (p.stock||0) - 1
+});
+}
+}
+
+/* MENSAJE */
+let txt="Hola quiero comprar:\n\n";
+
+carrito.forEach(p=>{
+txt+="- "+p.nombre+" $"+p.precio+"\n";
+});
+
+txt+="\n"+document.getElementById("total").innerText;
+txt+="\n\nYa realicé el pago por Nequi";
+
+window.open("https://wa.me/573187446036?text="+encodeURIComponent(txt));
+
+/* LIMPIAR CARRITO */
+carrito=[];
+guardarCarrito();
+renderCarrito();
+}
+
+/* INICIO */
 renderCarrito();
 
 </script>
