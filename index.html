@@ -5,35 +5,40 @@
 <title>Encanto Ventas Pasto</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#f1f5f9;}
-header{background:#111;color:#fff;text-align:center;padding:15px;}
+body{margin:0;font-family:'Segoe UI';background:#f1f5f9;}
+header{background:#0f172a;color:white;text-align:center;padding:15px;font-size:20px;}
 
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;padding:15px;}
 
-.producto{background:#fff;border-radius:10px;overflow:hidden;}
+.producto{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
 .producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
 
 .info{padding:10px;}
-button{margin-top:5px;width:100%;padding:6px;border:none;border-radius:6px;cursor:pointer;}
-.add{background:orange;}
-.wa{background:green;color:white;}
+.precio{color:#dc2626;font-weight:bold;}
 
-#carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:#fff;transition:.3s;padding:10px;}
+button{margin-top:5px;width:100%;padding:8px;border:none;border-radius:8px;cursor:pointer;}
+.add{background:#f59e0b;color:white;}
+.wa{background:#16a34a;color:white;}
+
+#carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:12px;border-radius:25px;}
+
+#carrito{
+position:fixed;right:-100%;top:0;width:300px;height:100%;
+background:white;transition:.3s;padding:10px;overflow:auto;
+}
 #carrito.active{right:0;}
 
-#carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:10px;border-radius:20px;}
+.total{font-weight:bold;margin-top:10px;font-size:18px;}
 
 #modal{
-display:none;
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.8);
-justify-content:center;
-align-items:center;
+display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 }
 #modal img{max-width:90%;max-height:90%;}
 
+/* reseñas */
+#reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
+.res{border-bottom:1px solid #eee;padding:5px 0;}
 </style>
 </head>
 
@@ -46,8 +51,8 @@ align-items:center;
 <div id="carrito">
 <button onclick="toggleCarrito()">Cerrar</button>
 <div id="items"></div>
-<div id="total">Total: $0</div>
-<button onclick="pagar()">Comprar</button>
+<div class="total" id="total">Total: $0</div>
+<button onclick="pagar()">Finalizar compra</button>
 </div>
 
 <div class="contenedor" id="lista"></div>
@@ -55,6 +60,15 @@ align-items:center;
 <!-- MODAL -->
 <div id="modal" onclick="cerrarModal()">
 <img id="imgModal">
+</div>
+
+<!-- RESEÑAS -->
+<div id="reseñas">
+<h3>⭐ Opiniones</h3>
+<div id="listaReseñas"></div>
+<input id="nombreReseña" placeholder="Tu nombre">
+<input id="textoReseña" placeholder="Comentario">
+<button onclick="agregarReseña()">Enviar</button>
 </div>
 
 <script type="module">
@@ -74,7 +88,7 @@ const db=getFirestore(app);
 let productos=[];
 let carrito=[];
 
-/* CARGAR PRODUCTOS */
+/* PRODUCTOS */
 onSnapshot(collection(db,"productos"),snap=>{
 productos=[];
 snap.forEach(d=>{
@@ -83,39 +97,35 @@ productos.push({id:d.id,...d.data()});
 mostrar();
 });
 
-/* MOSTRAR PRODUCTOS */
 function mostrar(){
 const cont=document.getElementById("lista");
 cont.innerHTML="";
 
-productos.forEach((p,index)=>{
+productos.forEach((p,i)=>{
 cont.innerHTML+=`
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
 <div class="info">
 <b>${p.nombre}</b>
-<p>$${p.precio}</p>
+<p class="precio">$${p.precio}</p>
 <p>Stock: ${p.stock}</p>
 
-<button class="add" onclick="agregarCarrito(${index})">Agregar</button>
-<button class="wa" onclick="comprarWhats(${index})">WhatsApp</button>
+<button class="add" onclick="agregarCarrito(${i})">Agregar</button>
+<button class="wa" onclick="comprarWhats(${i})">WhatsApp</button>
 
 </div>
 </div>`;
 });
 }
 
-/* IMAGEN GRANDE */
+/* IMAGEN */
 window.verImagen=(url)=>{
-document.getElementById("modal").style.display="flex";
-document.getElementById("imgModal").src=url;
+modal.style.display="flex";
+imgModal.src=url;
 }
+window.cerrarModal=()=>modal.style.display="none";
 
-window.cerrarModal=()=>{
-document.getElementById("modal").style.display="none";
-}
-
-/* BOTONES */
+/* CARRITO */
 window.agregarCarrito=(i)=>{
 let p=productos[i];
 let e=carrito.find(x=>x.id===p.id);
@@ -129,12 +139,6 @@ carrito.push({...p,cantidad:1});
 render();
 }
 
-window.comprarWhats=(i)=>{
-let p=productos[i];
-window.open("https://wa.me/573187446036?text=Quiero "+p.nombre);
-}
-
-/* CARRITO */
 function render(){
 let items=document.getElementById("items");
 let total=0;
@@ -155,6 +159,7 @@ ${p.nombre} x${p.cantidad}
 document.getElementById("total").innerText="Total: $"+total;
 }
 
+/* botones carrito */
 window.cambiar=(i,v)=>{
 let p=carrito[i];
 if(p.cantidad+v<=0)return;
@@ -162,23 +167,37 @@ if(p.cantidad+v>p.stock)return alert("Sin stock");
 p.cantidad+=v;
 render();
 }
-
 window.eliminar=i=>{
 carrito.splice(i,1);
 render();
 }
 
 window.toggleCarrito=()=>{
-document.getElementById("carrito").classList.toggle("active");
+carritoDiv.classList.toggle("active");
+}
+
+/* WHATSAPP BONITO */
+window.comprarWhats=(i)=>{
+let p=productos[i];
+let msg=`Hola 👋\nEstoy interesado en:\n\n🛍 ${p.nombre}\n💰 $${p.precio}`;
+window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 }
 
 /* PAGAR */
 window.pagar=async()=>{
 if(carrito.length===0)return;
 
+let total=document.getElementById("total").innerText;
+
+let msg="Hola 👋 quiero comprar:\n\n";
+carrito.forEach(p=>{
+msg+=`🛍 ${p.nombre} x${p.cantidad}\n`;
+});
+msg+="\n"+total+"\n\nPago por Nequi: 3187446036";
+
 await addDoc(collection(db,"ventas"),{
 productos:carrito.map(p=>({nombre:p.nombre,cantidad:p.cantidad})),
-total:parseFloat(document.getElementById("total").innerText.replace("Total: $","")),
+total:parseFloat(total.replace("Total: $","")),
 fecha:new Date().toLocaleString()
 });
 
@@ -188,11 +207,27 @@ stock:p.stock-p.cantidad
 });
 }
 
-window.open("https://wa.me/573187446036?text=Pedido realizado");
+window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 
 carrito=[];
 render();
 }
+
+/* RESEÑAS */
+window.agregarReseña=async()=>{
+await addDoc(collection(db,"reseñas"),{
+nombre:nombreReseña.value,
+texto:textoReseña.value
+});
+}
+
+onSnapshot(collection(db,"reseñas"),snap=>{
+listaReseñas.innerHTML="";
+snap.forEach(d=>{
+let r=d.data();
+listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b>: ${r.texto}</div>`;
+});
+});
 
 </script>
 
