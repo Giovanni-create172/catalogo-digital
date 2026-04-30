@@ -37,6 +37,10 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 #modal img{max-width:90%;max-height:90%;}
 
 #admin{display:none;background:white;margin:10px;padding:10px;}
+
+/* RESEÑAS */
+#reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
+.res{border-bottom:1px solid #eee;padding:5px 0;}
 </style>
 </head>
 
@@ -71,6 +75,18 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 <!-- MODAL -->
 <div id="modal" onclick="cerrarModal()">
 <img id="imgModal">
+</div>
+
+<!-- RESEÑAS -->
+<div id="reseñas">
+<h3>⭐ Opiniones</h3>
+
+<div id="listaReseñas"></div>
+
+<input id="nombreReseña" placeholder="Tu nombre">
+<input id="textoReseña" placeholder="Comentario">
+
+<button onclick="agregarReseña()">Enviar</button>
 </div>
 
 <script type="module">
@@ -234,14 +250,12 @@ msg += `🛍 ${p.nombre} x${p.cantidad}\n`;
 
 msg += "\n" + total + "\n\nPago por Nequi: 3187446036";
 
-/* GUARDAR VENTA */
 await addDoc(collection(db,"ventas"),{
 productos:carrito.map(p=>({nombre:p.nombre,cantidad:p.cantidad})),
 total:parseFloat(total.replace("Total: $","")),
 fecha:new Date().toLocaleString()
 });
 
-/* DESCONTAR STOCK */
 for(let p of carrito){
 await updateDoc(doc(db,"productos",p.id),{
 stock: p.stock - p.cantidad
@@ -253,6 +267,29 @@ window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 carrito = [];
 renderCarrito();
 }
+
+/* RESEÑAS */
+window.agregarReseña = async ()=>{
+await addDoc(collection(db,"reseñas"),{
+nombre: document.getElementById("nombreReseña").value,
+texto: document.getElementById("textoReseña").value
+});
+}
+
+onSnapshot(collection(db,"reseñas"),(snap)=>{
+const cont = document.getElementById("listaReseñas");
+cont.innerHTML = "";
+
+snap.forEach(doc=>{
+let r = doc.data();
+
+cont.innerHTML += `
+<div class="res">
+<b>${r.nombre}</b><br>
+${r.texto}
+</div>`;
+});
+});
 
 </script>
 
