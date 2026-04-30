@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -6,29 +6,29 @@
 
 <style>
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;}
-header{background:#0f172a;color:white;text-align:center;padding:15px;font-size:20px;}
+header{background:#0f172a;color:white;text-align:center;padding:15px;}
 
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;padding:15px;}
 
-.producto{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.producto{background:white;border-radius:12px;overflow:hidden;}
 .producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
 
 .info{padding:10px;}
-.precio{color:#dc2626;font-weight:bold;}
+.precio{color:red;font-weight:bold;}
 
-button{margin-top:5px;width:100%;padding:8px;border:none;border-radius:8px;cursor:pointer;}
-.add{background:#f59e0b;color:white;}
-.wa{background:#16a34a;color:white;}
+button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;}
+.add{background:orange;}
+.wa{background:green;color:white;}
 
 #carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:12px;border-radius:25px;}
 
 #carrito{
 position:fixed;right:-100%;top:0;width:300px;height:100%;
-background:white;transition:.3s;padding:10px;overflow:auto;
+background:white;padding:10px;transition:.3s;overflow:auto;
 }
 #carrito.active{right:0;}
 
-.total{font-weight:bold;margin-top:10px;font-size:18px;}
+.total{font-weight:bold;margin-top:10px;}
 
 #modal{
 display:none;position:fixed;top:0;left:0;width:100%;height:100%;
@@ -36,9 +36,7 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 }
 #modal img{max-width:90%;max-height:90%;}
 
-/* reseñas */
-#reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
-.res{border-bottom:1px solid #eee;padding:5px 0;}
+#admin{display:none;background:white;margin:10px;padding:10px;}
 </style>
 </head>
 
@@ -46,6 +44,18 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 
 <header>Encanto Ventas Pasto</header>
 
+<!-- ADMIN -->
+<div id="admin">
+<h3>Agregar producto</h3>
+<input id="nombre" placeholder="Nombre">
+<input id="precio" placeholder="Precio">
+<input id="imagen" placeholder="URL imagen">
+<input id="descripcion" placeholder="Descripción">
+<input id="stock" placeholder="Stock">
+<button onclick="agregar()">Agregar</button>
+</div>
+
+<!-- CARRITO -->
 <div id="carritoBtn" onclick="toggleCarrito()">🛒</div>
 
 <div id="carrito">
@@ -55,6 +65,7 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 <button onclick="pagar()">Finalizar compra</button>
 </div>
 
+<!-- PRODUCTOS -->
 <div class="contenedor" id="lista"></div>
 
 <!-- MODAL -->
@@ -62,56 +73,65 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 <img id="imgModal">
 </div>
 
-<!-- RESEÑAS -->
-<div id="reseñas">
-<h3>⭐ Opiniones</h3>
-<div id="listaReseñas"></div>
-<input id="nombreReseña" placeholder="Tu nombre">
-<input id="textoReseña" placeholder="Comentario">
-<button onclick="agregarReseña()">Enviar</button>
-</div>
-
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc } 
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app=initializeApp({
+const app = initializeApp({
 apiKey:"AIzaSy",
 authDomain:"catalogo-digital-4a956.firebaseapp.com",
 projectId:"catalogo-digital-4a956"
 });
 
-const db=getFirestore(app);
+const db = getFirestore(app);
 
-let productos=[];
-let carrito=[];
+let productos = [];
+let carrito = [];
 
-/* PRODUCTOS */
-onSnapshot(collection(db,"productos"),snap=>{
-productos=[];
-snap.forEach(d=>{
-productos.push({id:d.id,...d.data()});
+/* ADMIN ACTIVAR */
+if(new URLSearchParams(location.search).get("admin")==="1234"){
+document.getElementById("admin").style.display="block";
+}
+
+/* AGREGAR PRODUCTO */
+window.agregar = async ()=>{
+await addDoc(collection(db,"productos"),{
+nombre:nombre.value,
+precio:Number(precio.value),
+imagen:imagen.value,
+descripcion:descripcion.value,
+stock:Number(stock.value)
+});
+}
+
+/* CARGAR PRODUCTOS */
+onSnapshot(collection(db,"productos"),(snap)=>{
+productos = [];
+snap.forEach(docu=>{
+productos.push({id:docu.id,...docu.data()});
 });
 mostrar();
 });
 
+/* MOSTRAR */
 function mostrar(){
-const cont=document.getElementById("lista");
-cont.innerHTML="";
+const cont = document.getElementById("lista");
+cont.innerHTML = "";
 
 productos.forEach((p,i)=>{
-cont.innerHTML+=`
+cont.innerHTML += `
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
 <div class="info">
 <b>${p.nombre}</b>
 <p class="precio">$${p.precio}</p>
+<p>${p.descripcion||""}</p>
 <p>Stock: ${p.stock}</p>
 
 <button class="add" onclick="agregarCarrito(${i})">Agregar</button>
-<button class="wa" onclick="comprarWhats(${i})">WhatsApp</button>
+<button class="wa" onclick="whatsapp(${i})">WhatsApp</button>
 
 </div>
 </div>`;
@@ -119,35 +139,43 @@ cont.innerHTML+=`
 }
 
 /* IMAGEN */
-window.verImagen=(url)=>{
-modal.style.display="flex";
-imgModal.src=url;
+window.verImagen = (url)=>{
+document.getElementById("modal").style.display="flex";
+document.getElementById("imgModal").src = url;
 }
-window.cerrarModal=()=>modal.style.display="none";
+
+window.cerrarModal = ()=>{
+document.getElementById("modal").style.display="none";
+}
 
 /* CARRITO */
-window.agregarCarrito=(i)=>{
-let p=productos[i];
-let e=carrito.find(x=>x.id===p.id);
+window.agregarCarrito = (i)=>{
+let p = productos[i];
+let existe = carrito.find(x=>x.id===p.id);
 
-if(e){
-if(e.cantidad<p.stock)e.cantidad++;
-else return alert("Sin stock");
+if(existe){
+if(existe.cantidad < p.stock){
+existe.cantidad++;
+}else{
+alert("Sin stock");
+}
 }else{
 carrito.push({...p,cantidad:1});
 }
-render();
+
+renderCarrito();
 }
 
-function render(){
-let items=document.getElementById("items");
-let total=0;
-items.innerHTML="";
+function renderCarrito(){
+const items = document.getElementById("items");
+let total = 0;
+
+items.innerHTML = "";
 
 carrito.forEach((p,i)=>{
-total+=p.precio*p.cantidad;
+total += p.precio * p.cantidad;
 
-items.innerHTML+=`
+items.innerHTML += `
 <div>
 ${p.nombre} x${p.cantidad}
 <button onclick="cambiar(${i},-1)">-</button>
@@ -156,80 +184,77 @@ ${p.nombre} x${p.cantidad}
 </div>`;
 });
 
-document.getElementById("total").innerText="Total: $"+total;
+document.getElementById("total").innerText = "Total: $" + total;
 }
 
-/* botones carrito */
-window.cambiar=(i,v)=>{
-let p=carrito[i];
-if(p.cantidad+v<=0)return;
-if(p.cantidad+v>p.stock)return alert("Sin stock");
-p.cantidad+=v;
-render();
+window.cambiar = (i,val)=>{
+let p = carrito[i];
+
+if(p.cantidad + val <= 0) return;
+
+if(p.cantidad + val > p.stock){
+alert("Stock máximo");
+return;
 }
-window.eliminar=i=>{
+
+p.cantidad += val;
+renderCarrito();
+}
+
+window.eliminar = (i)=>{
 carrito.splice(i,1);
-render();
+renderCarrito();
 }
 
-window.toggleCarrito=()=>{
-carritoDiv.classList.toggle("active");
+window.toggleCarrito = ()=>{
+document.getElementById("carrito").classList.toggle("active");
 }
 
-/* WHATSAPP BONITO */
-window.comprarWhats=(i)=>{
-let p=productos[i];
-let msg=`Hola 👋\nEstoy interesado en:\n\n🛍 ${p.nombre}\n💰 $${p.precio}`;
+/* WHATSAPP */
+window.whatsapp = (i)=>{
+let p = productos[i];
+let msg = `Hola 👋\nQuiero este producto:\n\n🛍 ${p.nombre}\n💰 $${p.precio}`;
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 }
 
 /* PAGAR */
-window.pagar=async()=>{
-if(carrito.length===0)return;
+window.pagar = async ()=>{
+if(carrito.length===0){
+alert("Carrito vacío");
+return;
+}
 
-let total=document.getElementById("total").innerText;
+let total = document.getElementById("total").innerText;
 
-let msg="Hola 👋 quiero comprar:\n\n";
+let msg = "Hola 👋 quiero comprar:\n\n";
+
 carrito.forEach(p=>{
-msg+=`🛍 ${p.nombre} x${p.cantidad}\n`;
+msg += `🛍 ${p.nombre} x${p.cantidad}\n`;
 });
-msg+="\n"+total+"\n\nPago por Nequi: 3187446036";
 
+msg += "\n" + total + "\n\nPago por Nequi: 3187446036";
+
+/* GUARDAR VENTA */
 await addDoc(collection(db,"ventas"),{
 productos:carrito.map(p=>({nombre:p.nombre,cantidad:p.cantidad})),
 total:parseFloat(total.replace("Total: $","")),
 fecha:new Date().toLocaleString()
 });
 
+/* DESCONTAR STOCK */
 for(let p of carrito){
 await updateDoc(doc(db,"productos",p.id),{
-stock:p.stock-p.cantidad
+stock: p.stock - p.cantidad
 });
 }
 
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 
-carrito=[];
-render();
+carrito = [];
+renderCarrito();
 }
-
-/* RESEÑAS */
-window.agregarReseña=async()=>{
-await addDoc(collection(db,"reseñas"),{
-nombre:nombreReseña.value,
-texto:textoReseña.value
-});
-}
-
-onSnapshot(collection(db,"reseñas"),snap=>{
-listaReseñas.innerHTML="";
-snap.forEach(d=>{
-let r=d.data();
-listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b>: ${r.texto}</div>`;
-});
-});
 
 </script>
 
 </body>
-</html> 
+</html>
