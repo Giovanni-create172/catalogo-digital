@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -15,6 +15,22 @@ header{background:#111827;color:white;text-align:center;padding:15px;font-weight
   border-radius:8px;
   border:1px solid #ccc;
 }
+
+/* CATEGORÍAS */
+#categorias{
+  display:flex;
+  gap:10px;
+  padding:10px;
+  overflow-x:auto;
+}
+.cat{
+  padding:8px 12px;
+  background:#ddd;
+  border-radius:20px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.cat.activa{background:#111827;color:white;}
 
 #admin{
   display:none;
@@ -90,6 +106,11 @@ button{
 
 <input id="buscador" placeholder="🔍 Buscar producto..." onkeyup="filtrar()">
 
+<!-- CATEGORÍAS -->
+<div id="categorias">
+  <div class="cat activa" onclick="filtrarCategoria('')">Todos</div>
+</div>
+
 <!-- ADMIN -->
 <div id="admin">
   <h3>Admin</h3>
@@ -99,6 +120,7 @@ button{
   <input id="descripcion" placeholder="Descripción"><br>
   <input id="talla" placeholder="Talla"><br>
   <input id="color" placeholder="Color"><br>
+  <input id="categoria" placeholder="Categoría"><br>
   <button onclick="agregar()">Agregar producto</button>
 </div>
 
@@ -139,6 +161,7 @@ const db = getFirestore(app);
 
 let productos=[];
 let carrito=[];
+let categoriaActiva="";
 
 /* ADMIN */
 const esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
@@ -154,16 +177,34 @@ window.agregar = async ()=>{
     imagen:imagen.value,
     descripcion:descripcion.value,
     talla:talla.value,
-    color:color.value
+    color:color.value,
+    categoria:categoria.value
   });
 }
 
-/* MOSTRAR */
+/* MOSTRAR + CATEGORÍAS */
 onSnapshot(collection(db,"productos"),(snap)=>{
   productos=[];
-  snap.forEach(doc=>productos.push(doc.data()));
+  let cats=new Set();
+
+  snap.forEach(doc=>{
+    let p=doc.data();
+    productos.push(p);
+    if(p.categoria) cats.add(p.categoria);
+  });
+
+  crearCategorias([...cats]);
   mostrar(productos);
 });
+
+function crearCategorias(lista){
+  let cont=document.getElementById("categorias");
+  cont.innerHTML=`<div class="cat activa" onclick="filtrarCategoria('')">Todos</div>`;
+
+  lista.forEach(c=>{
+    cont.innerHTML+=`<div class="cat" onclick="filtrarCategoria('${c}')">${c}</div>`;
+  });
+}
 
 function mostrar(lista){
   let cont=document.getElementById("lista");
@@ -180,6 +221,7 @@ function mostrar(lista){
           <p class="detalle">${p.descripcion || ""}</p>
           <p class="detalle">Talla: ${p.talla || ""}</p>
           <p class="detalle">Color: ${p.color || ""}</p>
+          <p class="detalle">Categoría: ${p.categoria || ""}</p>
 
           <button class="add" onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
 
@@ -192,36 +234,48 @@ function mostrar(lista){
   });
 }
 
-/* BUSCADOR */
+/* FILTROS */
 window.filtrar=()=>{
-  let t=document.getElementById("buscador").value.toLowerCase();
-  mostrar(productos.filter(p=>p.nombre.toLowerCase().includes(t)));
+  let t=buscador.value.toLowerCase();
+  let filtrados=productos.filter(p=>p.nombre.toLowerCase().includes(t));
+
+  if(categoriaActiva){
+    filtrados=filtrados.filter(p=>p.categoria===categoriaActiva);
+  }
+
+  mostrar(filtrados);
 }
 
-/* 🛒 CARRITO (ARREGLADO REAL) */
-window.agregarCarrito = (p) => {
+window.filtrarCategoria=(cat)=>{
+  categoriaActiva=cat;
+
+  document.querySelectorAll(".cat").forEach(c=>c.classList.remove("activa"));
+  event.target.classList.add("activa");
+
+  filtrar();
+}
+
+/* CARRITO */
+window.agregarCarrito=(p)=>{
   carrito.push(p);
   renderCarrito();
   document.getElementById("carrito").classList.add("active");
 }
 
 function renderCarrito(){
-  const cont = document.getElementById("items");
-  cont.innerHTML = "";
+  const cont=document.getElementById("items");
+  cont.innerHTML="";
 
-  if(carrito.length === 0){
-    cont.innerHTML = "<p>Carrito vacío</p>";
-  } else {
+  if(carrito.length===0){
+    cont.innerHTML="<p>Carrito vacío</p>";
+  }else{
     carrito.forEach((p,i)=>{
-      const div = document.createElement("div");
-
-      div.innerHTML = `
+      let div=document.createElement("div");
+      div.innerHTML=`
         <p>${p.nombre} - $${p.precio}</p>
         <button class="del">Quitar</button>
       `;
-
-      div.querySelector("button").onclick = () => eliminar(i);
-
+      div.querySelector("button").onclick=()=>eliminar(i);
       cont.appendChild(div);
     });
   }
@@ -229,12 +283,12 @@ function renderCarrito(){
   document.getElementById("carritoBtn").innerText="🛒 ("+carrito.length+")";
 }
 
-window.eliminar = (i)=>{
+window.eliminar=(i)=>{
   carrito.splice(i,1);
   renderCarrito();
 }
 
-window.toggleCarrito = ()=>{
+window.toggleCarrito=()=>{
   document.getElementById("carrito").classList.toggle("active");
 }
 
@@ -270,4 +324,4 @@ window.verImagen=(url)=>{
 </script>
 
 </body>
-</html> 
+</html>
