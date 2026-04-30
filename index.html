@@ -11,38 +11,35 @@ header{background:#111;color:#fff;text-align:center;padding:15px;}
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;padding:15px;}
 
 .producto{background:#fff;border-radius:10px;overflow:hidden;}
-.producto img{width:100%;height:200px;object-fit:cover;}
+.producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
 
 .info{padding:10px;}
-button{margin-top:5px;width:100%;padding:6px;border:none;border-radius:6px;}
+button{margin-top:5px;width:100%;padding:6px;border:none;border-radius:6px;cursor:pointer;}
+.add{background:orange;}
+.wa{background:green;color:white;}
 
 #carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:#fff;transition:.3s;padding:10px;}
 #carrito.active{right:0;}
 
 #carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:10px;border-radius:20px;}
 
-#admin,#ventas{display:none;padding:10px;background:white;margin:10px;border-radius:10px;}
-.card{background:black;color:white;padding:8px;margin:5px 0;border-radius:8px;}
+#modal{
+display:none;
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.8);
+justify-content:center;
+align-items:center;
+}
+#modal img{max-width:90%;max-height:90%;}
+
 </style>
 </head>
 
 <body>
 
 <header>Encanto Ventas Pasto</header>
-
-<div id="admin">
-<input id="nombre" placeholder="Nombre">
-<input id="precio" placeholder="Precio">
-<input id="imagen" placeholder="URL imagen">
-<input id="stock" placeholder="Stock">
-<button onclick="agregar()">Agregar</button>
-</div>
-
-<div id="ventas">
-<h3>Dashboard</h3>
-<div id="resumen"></div>
-<div id="listaVentas"></div>
-</div>
 
 <div id="carritoBtn" onclick="toggleCarrito()">🛒</div>
 
@@ -55,10 +52,15 @@ button{margin-top:5px;width:100%;padding:6px;border:none;border-radius:6px;}
 
 <div class="contenedor" id="lista"></div>
 
+<!-- MODAL -->
+<div id="modal" onclick="cerrarModal()">
+<img id="imgModal">
+</div>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } 
+import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app=initializeApp({
@@ -72,23 +74,7 @@ const db=getFirestore(app);
 let productos=[];
 let carrito=[];
 
-/* ADMIN */
-if(new URLSearchParams(location.search).get("admin")==="1234"){
-document.getElementById("admin").style.display="block";
-document.getElementById("ventas").style.display="block";
-}
-
-/* AGREGAR */
-window.agregar=async()=>{
-await addDoc(collection(db,"productos"),{
-nombre:nombre.value,
-precio:Number(precio.value),
-imagen:imagen.value,
-stock:Number(stock.value)
-});
-}
-
-/* MOSTRAR PRODUCTOS */
+/* CARGAR PRODUCTOS */
 onSnapshot(collection(db,"productos"),snap=>{
 productos=[];
 snap.forEach(d=>{
@@ -97,32 +83,58 @@ productos.push({id:d.id,...d.data()});
 mostrar();
 });
 
+/* MOSTRAR PRODUCTOS */
 function mostrar(){
 const cont=document.getElementById("lista");
 cont.innerHTML="";
 
-productos.forEach(p=>{
+productos.forEach((p,index)=>{
 cont.innerHTML+=`
 <div class="producto">
-<img src="${p.imagen}">
+<img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
 <div class="info">
 <b>${p.nombre}</b>
 <p>$${p.precio}</p>
 <p>Stock: ${p.stock}</p>
-<button onclick='agregarCarrito(${JSON.stringify(p)})'>Agregar</button>
-<button onclick="window.open('https://wa.me/573187446036?text=Quiero ${p.nombre}')">WhatsApp</button>
+
+<button class="add" onclick="agregarCarrito(${index})">Agregar</button>
+<button class="wa" onclick="comprarWhats(${index})">WhatsApp</button>
+
 </div>
 </div>`;
 });
 }
 
-/* CARRITO */
-window.agregarCarrito=p=>{
+/* IMAGEN GRANDE */
+window.verImagen=(url)=>{
+document.getElementById("modal").style.display="flex";
+document.getElementById("imgModal").src=url;
+}
+
+window.cerrarModal=()=>{
+document.getElementById("modal").style.display="none";
+}
+
+/* BOTONES */
+window.agregarCarrito=(i)=>{
+let p=productos[i];
 let e=carrito.find(x=>x.id===p.id);
-if(e){e.cantidad++}else{p.cantidad=1;carrito.push(p);}
+
+if(e){
+if(e.cantidad<p.stock)e.cantidad++;
+else return alert("Sin stock");
+}else{
+carrito.push({...p,cantidad:1});
+}
 render();
 }
 
+window.comprarWhats=(i)=>{
+let p=productos[i];
+window.open("https://wa.me/573187446036?text=Quiero "+p.nombre);
+}
+
+/* CARRITO */
 function render(){
 let items=document.getElementById("items");
 let total=0;
@@ -130,6 +142,7 @@ items.innerHTML="";
 
 carrito.forEach((p,i)=>{
 total+=p.precio*p.cantidad;
+
 items.innerHTML+=`
 <div>
 ${p.nombre} x${p.cantidad}
@@ -145,6 +158,7 @@ document.getElementById("total").innerText="Total: $"+total;
 window.cambiar=(i,v)=>{
 let p=carrito[i];
 if(p.cantidad+v<=0)return;
+if(p.cantidad+v>p.stock)return alert("Sin stock");
 p.cantidad+=v;
 render();
 }
@@ -179,37 +193,6 @@ window.open("https://wa.me/573187446036?text=Pedido realizado");
 carrito=[];
 render();
 }
-
-/* DASHBOARD */
-onSnapshot(collection(db,"ventas"),snap=>{
-let total=0,pedidos=0,conteo={};
-
-let lista=document.getElementById("listaVentas");
-lista.innerHTML="";
-
-snap.forEach(d=>{
-let v=d.data();
-total+=v.total;
-pedidos++;
-
-v.productos.forEach(p=>{
-conteo[p.nombre]=(conteo[p.nombre]||0)+p.cantidad;
-});
-
-lista.innerHTML+=`<div>${v.fecha} - $${v.total}</div>`;
-});
-
-let top="Ninguno",max=0;
-for(let k in conteo){
-if(conteo[k]>max){max=conteo[k];top=k;}
-}
-
-document.getElementById("resumen").innerHTML=`
-<div class="card">Total: $${total}</div>
-<div class="card">Pedidos: ${pedidos}</div>
-<div class="card">Top: ${top}</div>
-`;
-});
 
 </script>
 
