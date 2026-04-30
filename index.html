@@ -8,6 +8,15 @@
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;}
 header{background:#0f172a;color:white;text-align:center;padding:15px;}
 
+#buscador{
+width:90%;
+margin:10px auto;
+display:block;
+padding:10px;
+border-radius:10px;
+border:1px solid #ccc;
+}
+
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;padding:15px;}
 
 .producto{background:white;border-radius:12px;overflow:hidden;}
@@ -38,7 +47,6 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 
 #admin{display:none;background:white;margin:10px;padding:10px;}
 
-/* RESEÑAS */
 #reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
 .res{border-bottom:1px solid #eee;padding:5px 0;}
 </style>
@@ -47,6 +55,9 @@ background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
 <body>
 
 <header>Encanto Ventas Pasto</header>
+
+<!-- 🔎 BUSCADOR -->
+<input id="buscador" placeholder="Buscar productos..." onkeyup="filtrar()">
 
 <!-- ADMIN -->
 <div id="admin">
@@ -106,7 +117,7 @@ const db = getFirestore(app);
 let productos = [];
 let carrito = [];
 
-/* ADMIN ACTIVAR */
+/* ADMIN */
 if(new URLSearchParams(location.search).get("admin")==="1234"){
 document.getElementById("admin").style.display="block";
 }
@@ -128,15 +139,15 @@ productos = [];
 snap.forEach(docu=>{
 productos.push({id:docu.id,...docu.data()});
 });
-mostrar();
+mostrar(productos);
 });
 
 /* MOSTRAR */
-function mostrar(){
+function mostrar(listaMostrar){
 const cont = document.getElementById("lista");
 cont.innerHTML = "";
 
-productos.forEach((p,i)=>{
+listaMostrar.forEach((p,i)=>{
 cont.innerHTML += `
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
@@ -154,15 +165,24 @@ cont.innerHTML += `
 });
 }
 
-/* IMAGEN */
-window.verImagen = (url)=>{
-document.getElementById("modal").style.display="flex";
-document.getElementById("imgModal").src = url;
+/* 🔎 FILTRAR */
+window.filtrar = ()=>{
+let texto = document.getElementById("buscador").value.toLowerCase();
+
+let filtrados = productos.filter(p =>
+(p.nombre||"").toLowerCase().includes(texto) ||
+(p.descripcion||"").toLowerCase().includes(texto)
+);
+
+mostrar(filtrados);
 }
 
-window.cerrarModal = ()=>{
-document.getElementById("modal").style.display="none";
+/* IMAGEN */
+window.verImagen = (url)=>{
+modal.style.display="flex";
+imgModal.src = url;
 }
+window.cerrarModal = ()=>modal.style.display="none";
 
 /* CARRITO */
 window.agregarCarrito = (i)=>{
@@ -170,22 +190,17 @@ let p = productos[i];
 let existe = carrito.find(x=>x.id===p.id);
 
 if(existe){
-if(existe.cantidad < p.stock){
-existe.cantidad++;
-}else{
-alert("Sin stock");
-}
+if(existe.cantidad < p.stock) existe.cantidad++;
+else return alert("Sin stock");
 }else{
 carrito.push({...p,cantidad:1});
 }
-
 renderCarrito();
 }
 
 function renderCarrito(){
-const items = document.getElementById("items");
+let items = document.getElementById("items");
 let total = 0;
-
 items.innerHTML = "";
 
 carrito.forEach((p,i)=>{
@@ -205,15 +220,9 @@ document.getElementById("total").innerText = "Total: $" + total;
 
 window.cambiar = (i,val)=>{
 let p = carrito[i];
-
-if(p.cantidad + val <= 0) return;
-
-if(p.cantidad + val > p.stock){
-alert("Stock máximo");
-return;
-}
-
-p.cantidad += val;
+if(p.cantidad+val<=0) return;
+if(p.cantidad+val>p.stock) return alert("Stock máximo");
+p.cantidad+=val;
 renderCarrito();
 }
 
@@ -235,20 +244,15 @@ window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 
 /* PAGAR */
 window.pagar = async ()=>{
-if(carrito.length===0){
-alert("Carrito vacío");
-return;
-}
+if(carrito.length===0) return alert("Carrito vacío");
 
 let total = document.getElementById("total").innerText;
 
 let msg = "Hola 👋 quiero comprar:\n\n";
-
 carrito.forEach(p=>{
 msg += `🛍 ${p.nombre} x${p.cantidad}\n`;
 });
-
-msg += "\n" + total + "\n\nPago por Nequi: 3187446036";
+msg += "\n"+total+"\n\nPago por Nequi: 3187446036";
 
 await addDoc(collection(db,"ventas"),{
 productos:carrito.map(p=>({nombre:p.nombre,cantidad:p.cantidad})),
@@ -264,30 +268,23 @@ stock: p.stock - p.cantidad
 
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 
-carrito = [];
+carrito=[];
 renderCarrito();
 }
 
 /* RESEÑAS */
 window.agregarReseña = async ()=>{
 await addDoc(collection(db,"reseñas"),{
-nombre: document.getElementById("nombreReseña").value,
-texto: document.getElementById("textoReseña").value
+nombre: nombreReseña.value,
+texto: textoReseña.value
 });
 }
 
 onSnapshot(collection(db,"reseñas"),(snap)=>{
-const cont = document.getElementById("listaReseñas");
-cont.innerHTML = "";
-
+listaReseñas.innerHTML="";
 snap.forEach(doc=>{
 let r = doc.data();
-
-cont.innerHTML += `
-<div class="res">
-<b>${r.nombre}</b><br>
-${r.texto}
-</div>`;
+listaReseñas.innerHTML += `<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
 });
 });
 
