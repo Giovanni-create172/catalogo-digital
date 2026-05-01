@@ -8,16 +8,9 @@
 <style>
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;overflow-x:hidden;}
 
-/* HEADER PRO */
 .headerPro{
-position:sticky;
-top:0;
-background:white;
-display:flex;
-justify-content:center;
-align-items:center;
-padding:10px;
-box-shadow:0 2px 10px rgba(0,0,0,0.1);
+position:sticky;top:0;background:white;display:flex;justify-content:center;
+align-items:center;padding:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);
 z-index:1000;
 }
 
@@ -28,17 +21,16 @@ z-index:1000;
 .nombre{font-weight:bold;font-size:18px;color:#0f172a;}
 .ciudad{font-size:12px;color:gray;}
 
-#buscador{width:95%;margin:10px auto;display:block;padding:12px;border-radius:12px;border:1px solid #ccc;font-size:16px;}
+#buscador{width:95%;margin:10px auto;display:block;padding:12px;border-radius:12px;border:1px solid #ccc;}
 
 #filtros{display:flex;gap:8px;overflow:auto;padding:10px;}
-.filtroBtn{padding:8px 12px;background:#e2e8f0;border-radius:20px;cursor:pointer;white-space:nowrap;}
-.filtroBtn.active{background:black;color:white;}
+.filtroBtn{padding:8px 12px;background:#e2e8f0;border-radius:20px;cursor:pointer;}
+.filtroBtn.active{background:black;color:white;color:white;}
 
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px;padding:15px;}
-.categoriaTitulo{padding:10px;font-weight:bold;font-size:18px;}
 
 .producto{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-.producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
+.producto img{width:100%;height:200px;object-fit:cover;}
 
 .info{padding:10px;}
 .precio{color:red;font-weight:bold;}
@@ -46,47 +38,65 @@ z-index:1000;
 button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;}
 .add{background:orange;}
 .wa{background:green;color:white;}
-.agotado{background:gray;color:white;}
 .eliminar{background:red;color:white;}
+.agotado{background:gray;color:white;}
 
 #carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:12px;border-radius:25px;}
 
-#carrito{position:fixed;right:-100%;top:0;width:300px;height:100%;background:white;padding:10px;transition:.3s;overflow:auto;}
+#carrito{
+position:fixed;right:-100%;top:0;width:300px;height:100%;
+background:white;padding:10px;transition:.3s;overflow:auto;
+}
 #carrito.active{right:0;}
 
-.total{font-weight:bold;margin-top:10px;}
-
-#modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;}
+#modal{
+display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.8);justify-content:center;align-items:center;
+}
 #modal img{max-width:90%;max-height:90%;}
 
 #admin{display:none;background:white;margin:10px;padding:10px;border-radius:10px;}
 
 #reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
 .res{border-bottom:1px solid #eee;padding:5px 0;}
+
+/* REDES */
+#redes{
+background:white;margin:20px;padding:15px;border-radius:12px;text-align:center;
+}
+#redes a{
+display:inline-block;margin:5px;padding:10px;border-radius:10px;
+color:white;text-decoration:none;
+}
+.ig{background:linear-gradient(45deg,#f09433,#dc2743);}
+.fb{background:#1877f2;}
+.wa2{background:#25D366;}
+.tk{background:black;}
+
 </style>
 </head>
 
 <body>
 
 <header class="headerPro">
-  <div class="logoBox">
-    <img src="https://raw.githubusercontent.com/Giovanni-create172/catalogo-digital/main/logo.png">
-    <div class="marca">
-      <span class="nombre">Encanto Ventas</span>
-      <span class="ciudad">Pasto</span>
-    </div>
-  </div>
+<div class="logoBox">
+<img src="https://raw.githubusercontent.com/Giovanni-create172/catalogo-digital/main/logo.png">
+<div class="marca">
+<span class="nombre">Encanto Ventas</span>
+<span class="ciudad">Pasto</span>
+</div>
+</div>
 </header>
 
-<input id="buscador" placeholder="Buscar productos..." onkeyup="filtrar()">
+<input id="buscador" placeholder="Buscar..." onkeyup="filtrar()">
 
 <div id="filtros"></div>
 
 <div id="admin">
-<h3>Agregar producto</h3>
+<h3>Admin</h3>
 <input id="nombre" placeholder="Nombre">
 <input id="precio" placeholder="Precio">
-<input id="imagen" placeholder="URL imagen">
+<input id="imagen" placeholder="Imagen">
 <input id="descripcion" placeholder="Descripción">
 <input id="stock" placeholder="Stock">
 <input id="categoria" placeholder="Categoría">
@@ -98,7 +108,7 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 <div id="carrito">
 <button onclick="toggleCarrito()">Cerrar</button>
 <div id="items"></div>
-<div class="total" id="total">Total: $0</div>
+<div id="total">Total: $0</div>
 <button onclick="pagar()">Finalizar compra</button>
 </div>
 
@@ -108,10 +118,20 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 <img id="imgModal">
 </div>
 
+<!-- 🔥 REDES -->
+<div id="redes">
+<h3>Síguenos</h3>
+<a class="ig" href="https://instagram.com/encantoventaspasto" target="_blank">Instagram</a>
+<a class="fb" href="https://facebook.com/EncantoVentasPasto" target="_blank">Facebook</a>
+<a class="wa2" href="https://wa.me/573187446036" target="_blank">WhatsApp</a>
+<a class="tk" href="https://tiktok.com/@encantoventaspasto" target="_blank">TikTok</a>
+</div>
+
+<!-- RESEÑAS -->
 <div id="reseñas">
-<h3>⭐ Opiniones</h3>
+<h3>Opiniones</h3>
 <div id="listaReseñas"></div>
-<input id="nombreReseña" placeholder="Tu nombre">
+<input id="nombreReseña" placeholder="Nombre">
 <input id="textoReseña" placeholder="Comentario">
 <button onclick="agregarReseña()">Enviar</button>
 </div>
@@ -130,93 +150,106 @@ projectId:"catalogo-digital-4a956"
 
 const db = getFirestore(app);
 
-const filtros = document.getElementById("filtros");
-const lista = document.getElementById("lista");
-const admin = document.getElementById("admin");
-const carrito = document.getElementById("carrito");
-const items = document.getElementById("items");
-const total = document.getElementById("total");
-const modal = document.getElementById("modal");
-const imgModal = document.getElementById("imgModal");
-const listaReseñas = document.getElementById("listaReseñas");
+const lista=document.getElementById("lista");
+const filtros=document.getElementById("filtros");
+const carritoEl=document.getElementById("carrito");
+const items=document.getElementById("items");
+const total=document.getElementById("total");
+const modal=document.getElementById("modal");
+const imgModal=document.getElementById("imgModal");
+const listaReseñas=document.getElementById("listaReseñas");
+const admin=document.getElementById("admin");
 
 let productos=[];
-let carritoData=[];
-let categoriaActiva="Todas";
+let carrito=[];
 
 let esAdmin=new URLSearchParams(location.search).get("admin")==="1234";
 if(esAdmin) admin.style.display="block";
 
-window.agregar=async()=>{
-await addDoc(collection(db,"productos"),{
-nombre:nombre.value,
-precio:Number(precio.value),
-imagen:imagen.value,
-descripcion:descripcion.value,
-stock:Number(stock.value),
-categoria:categoria.value||"General"
-});
-}
-
-window.eliminarProducto=async(id)=>{
-if(!confirm("Eliminar producto?"))return;
-await deleteDoc(doc(db,"productos",id));
-}
-
+/* PRODUCTOS */
 onSnapshot(collection(db,"productos"),snap=>{
 productos=[];
 snap.forEach(d=>productos.push({id:d.id,...d.data()}));
-mostrar(productos);
+mostrar();
 });
 
-function mostrar(listaMostrar){
+/* MOSTRAR */
+function mostrar(){
 lista.innerHTML="";
-let grupos={};
+productos.forEach((p,i)=>{
 
-listaMostrar.forEach(p=>{
-let cat=p.categoria||"General";
-if(!grupos[cat])grupos[cat]=[];
-grupos[cat].push(p);
-});
-
-Object.keys(grupos).forEach(cat=>{
-lista.innerHTML+=`<div class="categoriaTitulo">📦 ${cat}</div><div class="contenedor">`;
-
-grupos[cat].forEach(p=>{
-let i=productos.findIndex(x=>x.id===p.id);
-
-/* 🔥 BOTONES CORREGIDOS */
-let boton=p.stock<=0
-? `<button class="agotado">AGOTADO</button>`
-: `<button class="add" onclick="agregarCarrito(${i})">🛒 Comprar</button>`;
-
-let waBtn=`<button class="wa" onclick="whatsapp(${i})">💬 WhatsApp</button>`;
-
-let eliminarBtn=esAdmin
-? `<button class="eliminar" onclick="eliminarProducto('${p.id}')">Eliminar</button>`
-: "";
+let btn=p.stock<=0
+? `<button class="agotado">Agotado</button>`
+: `<button class="add" onclick="agregarCarrito(${i})">Comprar</button>`;
 
 lista.innerHTML+=`
 <div class="producto">
-<img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
+<img src="${p.imagen}" onclick="ver('${p.imagen}')">
 <div class="info">
 <b>${p.nombre}</b>
 <p class="precio">$${p.precio}</p>
-<p>${p.descripcion||""}</p>
 
-${boton}
-${waBtn}
-${eliminarBtn}
+${btn}
+
+<button class="wa" onclick="wa(${i})">WhatsApp</button>
+
+${esAdmin?`<button class="eliminar" onclick="eliminar('${p.id}')">Eliminar</button>`:""}
 
 </div>
 </div>`;
 });
-
-lista.innerHTML+="</div>";
-});
 }
 
-window.verImagen=(url)=>{modal.style.display="flex";imgModal.src=url;}
+/* CARRITO */
+window.agregarCarrito=(i)=>{
+let p=productos[i];
+let e=carrito.find(x=>x.id===p.id);
+if(e) e.cantidad++;
+else carrito.push({...p,cantidad:1});
+renderCarrito();
+}
+
+function renderCarrito(){
+let t=0;
+items.innerHTML="";
+carrito.forEach((p,i)=>{
+t+=p.precio*p.cantidad;
+items.innerHTML+=`
+<div>${p.nombre} x${p.cantidad}
+<button onclick="cambiar(${i},-1)">-</button>
+<button onclick="cambiar(${i},1)">+</button>
+<button onclick="eliminarCar(${i})">X</button>
+</div>`;
+});
+total.innerText="Total: $"+t;
+}
+
+window.cambiar=(i,v)=>{
+carrito[i].cantidad+=v;
+if(carrito[i].cantidad<=0) carrito.splice(i,1);
+renderCarrito();
+}
+
+window.eliminarCar=i=>{
+carrito.splice(i,1);
+renderCarrito();
+}
+
+window.toggleCarrito=()=>carritoEl.classList.toggle("active");
+
+/* ELIMINAR PRODUCTO */
+window.eliminar=async(id)=>{
+await deleteDoc(doc(db,"productos",id));
+}
+
+/* WHATSAPP */
+window.wa=(i)=>{
+let p=productos[i];
+window.open("https://wa.me/573187446036?text="+p.nombre);
+}
+
+/* MODAL */
+window.ver=(u)=>{modal.style.display="flex";imgModal.src=u;}
 window.cerrarModal=()=>modal.style.display="none";
 
 /* RESEÑAS */
@@ -236,5 +269,6 @@ listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div
 });
 
 </script>
+
 </body>
 </html>
