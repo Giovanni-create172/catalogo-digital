@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -7,41 +7,31 @@
 
 <style>
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;overflow-x:hidden;}
-
-/* 🔥 HEADER PRO */
-.headerPro{
-position:sticky;
-top:0;
-background:white;
-display:flex;
-justify-content:center;
-align-items:center;
-padding:10px;
-box-shadow:0 2px 10px rgba(0,0,0,0.1);
-z-index:1000;
-}
-
-.logoBox{display:flex;align-items:center;gap:10px;}
-
-.logoBox img{
-width:45px;
-height:45px;
-border-radius:50%;
-object-fit:cover;
-}
-
-.marca{display:flex;flex-direction:column;line-height:1;}
-
-.nombre{font-weight:bold;font-size:18px;color:#0f172a;}
-.ciudad{font-size:12px;color:gray;}
+header{background:#0f172a;color:white;text-align:center;padding:15px;font-size:20px;}
 
 #buscador{width:95%;margin:10px auto;display:block;padding:12px;border-radius:12px;border:1px solid #ccc;font-size:16px;}
 
-#filtros{display:flex;gap:8px;overflow:auto;padding:10px;}
-.filtroBtn{padding:8px 12px;background:#e2e8f0;border-radius:20px;cursor:pointer;white-space:nowrap;}
-.filtroBtn.active{background:black;color:white;}
+/* 🔥 FILTROS */
+#filtros{
+display:flex;
+gap:8px;
+overflow:auto;
+padding:10px;
+}
+.filtroBtn{
+padding:8px 12px;
+background:#e2e8f0;
+border-radius:20px;
+cursor:pointer;
+white-space:nowrap;
+}
+.filtroBtn.active{
+background:black;
+color:white;
+}
 
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px;padding:15px;}
+
 .categoriaTitulo{padding:10px;font-weight:bold;font-size:18px;}
 
 .producto{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
@@ -51,9 +41,10 @@ object-fit:cover;
 .precio{color:red;font-weight:bold;}
 
 button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;cursor:pointer;}
+
 .add{background:orange;}
 .wa{background:green;color:white;}
-.agotado{background:gray;color:white;}
+.agotado{background:gray;color:white;cursor:not-allowed;}
 .eliminar{background:red;color:white;}
 
 #carritoBtn{position:fixed;bottom:20px;right:20px;background:black;color:white;padding:12px;border-radius:25px;}
@@ -75,19 +66,11 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 
 <body>
 
-<!-- 🔥 HEADER PRO -->
-<header class="headerPro">
-  <div class="logoBox">
-    <img src="https://raw.githubusercontent.com/Giovanni-create172/catalogo-digital/main/logo.png">
-    <div class="marca">
-      <span class="nombre">Encanto Ventas</span>
-      <span class="ciudad">Pasto</span>
-    </div>
-  </div>
-</header>
+<header>Encanto Ventas Pasto</header>
 
 <input id="buscador" placeholder="Buscar productos..." onkeyup="filtrar()">
 
+<!-- 🔥 FILTROS -->
 <div id="filtros"></div>
 
 <div id="admin">
@@ -145,6 +128,7 @@ let categoriaActiva = "Todas";
 let esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
 if(esAdmin) admin.style.display="block";
 
+/* AGREGAR */
 window.agregar = async ()=>{
 await addDoc(collection(db,"productos"),{
 nombre:nombre.value,
@@ -156,61 +140,71 @@ categoria:categoria.value || "General"
 });
 }
 
+/* ELIMINAR */
 window.eliminarProducto = async (id)=>{
 if(!confirm("Eliminar producto?")) return;
 await deleteDoc(doc(db,"productos",id));
 }
 
+/* CARGAR */
 onSnapshot(collection(db,"productos"),(snap)=>{
 productos=[];
 snap.forEach(docu=>productos.push({id:docu.id,...docu.data()}));
+
 crearFiltros();
 mostrar(productos);
 renderCarrito();
 });
 
+/* 🔥 CREAR BOTONES FILTRO */
 function crearFiltros(){
-let cats=["Todas"];
+let cats = ["Todas"];
 productos.forEach(p=>{
-let c=p.categoria||"General";
+let c = p.categoria || "General";
 if(!cats.includes(c)) cats.push(c);
 });
+
 filtros.innerHTML="";
 cats.forEach(c=>{
-filtros.innerHTML+=`<div class="filtroBtn ${c===categoriaActiva?'active':''}" onclick="filtrarCategoria('${c}')">${c}</div>`;
+filtros.innerHTML += `<div class="filtroBtn ${c===categoriaActiva?'active':''}" onclick="filtrarCategoria('${c}')">${c}</div>`;
 });
 }
 
-window.filtrarCategoria=(cat)=>{
-categoriaActiva=cat;
+/* 🔥 FILTRAR POR CATEGORIA */
+window.filtrarCategoria = (cat)=>{
+categoriaActiva = cat;
 crearFiltros();
+
 if(cat==="Todas") mostrar(productos);
 else mostrar(productos.filter(p=>p.categoria===cat));
 }
 
+/* MOSTRAR */
 function mostrar(listaMostrar){
 lista.innerHTML="";
-let grupos={};
+
+let grupos = {};
 listaMostrar.forEach(p=>{
-let cat=p.categoria||"General";
+let cat = p.categoria || "General";
 if(!grupos[cat]) grupos[cat]=[];
 grupos[cat].push(p);
 });
 
 Object.keys(grupos).forEach(cat=>{
-lista.innerHTML+=`<div class="categoriaTitulo">📦 ${cat}</div><div class="contenedor">`;
-grupos[cat].forEach(p=>{
-let i=productos.findIndex(x=>x.id===p.id);
+lista.innerHTML += `<div class="categoriaTitulo">📦 ${cat}</div><div class="contenedor">`;
 
-let boton=p.stock<=0
+grupos[cat].forEach(p=>{
+let i = productos.findIndex(x=>x.id===p.id);
+
+let boton = p.stock<=0
 ? `<button class="agotado">AGOTADO</button>`
 : `<button class="add" onclick="agregarCarrito(${i})">Agregar</button>`;
 
-let eliminarBtn=esAdmin
+let eliminarBtn = esAdmin
 ? `<button class="eliminar" onclick="eliminarProducto('${p.id}')">Eliminar</button>`
 : "";
 
-lista.innerHTML+=`
+lista.innerHTML += `
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
 <div class="info">
@@ -226,24 +220,28 @@ ${eliminarBtn}
 </div>
 </div>`;
 });
-lista.innerHTML+=`</div>`;
+
+lista.innerHTML += `</div>`;
 });
 }
 
-window.filtrar=()=>{
-let texto=buscador.value.toLowerCase();
-let filtrados=productos.filter(p=>
-(p.nombre||"").toLowerCase().includes(texto)||
-(p.descripcion||"").toLowerCase().includes(texto)||
+/* BUSCAR */
+window.filtrar = ()=>{
+let texto = buscador.value.toLowerCase();
+let filtrados = productos.filter(p =>
+(p.nombre||"").toLowerCase().includes(texto) ||
+(p.descripcion||"").toLowerCase().includes(texto) ||
 (p.categoria||"").toLowerCase().includes(texto)
 );
 mostrar(filtrados);
 }
 
-window.verImagen=(url)=>{modal.style.display="flex";imgModal.src=url;}
-window.cerrarModal=()=>modal.style.display="none";
+/* resto igual (carrito, whatsapp, pago, reseñas) */
 
-window.agregarCarrito=(i)=>{
+window.verImagen = (url)=>{modal.style.display="flex";imgModal.src=url;}
+window.cerrarModal = ()=>modal.style.display="none";
+
+window.agregarCarrito = (i)=>{
 let p=productos[i]; if(p.stock<=0) return;
 let e=carrito.find(x=>x.id===p.id);
 if(e){ if(e.cantidad<p.stock) e.cantidad++; else return alert("Sin stock"); }
@@ -270,11 +268,11 @@ if(p.cantidad+v>p.stock)return alert("Stock máximo");
 p.cantidad+=v;guardarCarrito();renderCarrito();}
 
 window.eliminar=i=>{carrito.splice(i,1);guardarCarrito();renderCarrito();}
-window.toggleCarrito=()=>document.getElementById("carrito").classList.toggle("active");
+window.toggleCarrito=()=>carrito.classList.toggle("active");
 
 window.whatsapp=i=>{
 let p=productos[i];
-window.open("https://wa.me/573187446036?text="+encodeURIComponent(`Hola 👋 quiero ${p.nombre}`));
+window.open("https://wa.me/573187446036?text="+encodeURIComponent(`Hola quiero ${p.nombre}`));
 }
 
 window.pagar=async()=>{
@@ -295,14 +293,3 @@ s.forEach(d=>{let r=d.data();listaReseñas.innerHTML+=`<div class="res"><b>${r.n
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
- 
