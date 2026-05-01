@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -8,7 +8,7 @@
 <style>
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;overflow-x:hidden;}
 
-/* 🔥 HEADER PRO */
+/* HEADER */
 .headerPro{
 position:sticky;
 top:0;
@@ -22,16 +22,9 @@ z-index:1000;
 }
 
 .logoBox{display:flex;align-items:center;gap:10px;}
-
-.logoBox img{
-width:45px;
-height:45px;
-border-radius:50%;
-object-fit:cover;
-}
+.logoBox img{width:45px;height:45px;border-radius:50%;object-fit:cover;}
 
 .marca{display:flex;flex-direction:column;line-height:1;}
-
 .nombre{font-weight:bold;font-size:18px;color:#0f172a;}
 .ciudad{font-size:12px;color:gray;}
 
@@ -70,6 +63,34 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 
 #reseñas{background:white;margin:20px;padding:15px;border-radius:12px;}
 .res{border-bottom:1px solid #eee;padding:5px 0;}
+
+/* REDES */
+#redes{
+background:white;
+margin:20px;
+padding:15px;
+border-radius:12px;
+text-align:center;
+}
+.redesBtn{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;}
+.red{padding:10px 15px;border-radius:10px;text-decoration:none;color:white;font-weight:bold;}
+.ig{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743);}
+.fb{background:#1877f2;}
+.wa2{background:#25D366;}
+.tk{background:black;}
+
+.floatWA{
+position:fixed;
+bottom:80px;
+right:20px;
+background:#25D366;
+color:white;
+padding:15px;
+border-radius:50%;
+font-size:22px;
+text-decoration:none;
+box-shadow:0 5px 10px rgba(0,0,0,0.2);
+}
 </style>
 </head>
 
@@ -115,6 +136,18 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 <img id="imgModal">
 </div>
 
+<!-- 🔥 REDES RESTAURADAS -->
+<div id="redes">
+<h3>Síguenos en redes</h3>
+<div class="redesBtn">
+<a class="red ig" href="https://instagram.com/encantoventaspasto" target="_blank">📸 Instagram</a>
+<a class="red fb" href="https://facebook.com/EncantoVentasPasto" target="_blank">👍 Facebook</a>
+<a class="red wa2" href="https://wa.me/573187446036" target="_blank">💬 WhatsApp</a>
+<a class="red tk" href="https://tiktok.com/@encantoventaspasto" target="_blank">🎵 TikTok</a>
+</div>
+</div>
+
+<!-- 🔥 RESEÑAS RESTAURADAS -->
 <div id="reseñas">
 <h3>⭐ Opiniones</h3>
 <div id="listaReseñas"></div>
@@ -123,10 +156,13 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 <button onclick="agregarReseña()">Enviar</button>
 </div>
 
+<!-- WHATSAPP FLOTANTE -->
+<a class="floatWA" href="https://wa.me/573187446036" target="_blank">💬</a>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } 
+import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const app = initializeApp({
@@ -137,11 +173,9 @@ projectId:"catalogo-digital-4a956"
 
 const db = getFirestore(app);
 
-/* 🔥 FIX CRÍTICO (ESTO ARREGLA LAS IMÁGENES) */
 const filtros = document.getElementById("filtros");
 const lista = document.getElementById("lista");
 const admin = document.getElementById("admin");
-const carritoBtn = document.getElementById("carritoBtn");
 const carrito = document.getElementById("carrito");
 const items = document.getElementById("items");
 const total = document.getElementById("total");
@@ -149,102 +183,88 @@ const modal = document.getElementById("modal");
 const imgModal = document.getElementById("imgModal");
 const listaReseñas = document.getElementById("listaReseñas");
 
-let productos = [];
-let carritoData = JSON.parse(localStorage.getItem("carrito")) || [];
-let categoriaActiva = "Todas";
+let productos=[];
+let carritoData=[];
+let categoriaActiva="Todas";
 
-let esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
+let esAdmin=new URLSearchParams(location.search).get("admin")==="1234";
 if(esAdmin) admin.style.display="block";
 
-window.agregar = async ()=>{
+/* 🔥 AGREGAR PRODUCTO */
+window.agregar=async()=>{
 await addDoc(collection(db,"productos"),{
 nombre:nombre.value,
 precio:Number(precio.value),
 imagen:imagen.value,
 descripcion:descripcion.value,
 stock:Number(stock.value),
-categoria:categoria.value || "General"
+categoria:categoria.value||"General"
 });
 }
 
-window.eliminarProducto = async (id)=>{
-if(!confirm("Eliminar producto?")) return;
+/* 🔥 ELIMINAR PRODUCTO (RESTAURADO) */
+window.eliminarProducto=async(id)=>{
+if(!confirm("Eliminar producto?"))return;
 await deleteDoc(doc(db,"productos",id));
 }
 
-onSnapshot(collection(db,"productos"),(snap)=>{
+/* 🔥 CARGA PRODUCTOS */
+onSnapshot(collection(db,"productos"),snap=>{
 productos=[];
-snap.forEach(docu=>productos.push({id:docu.id,...docu.data()}));
-crearFiltros();
+snap.forEach(d=>productos.push({id:d.id,...d.data()}));
 mostrar(productos);
-renderCarrito();
 });
-
-function crearFiltros(){
-let cats=["Todas"];
-productos.forEach(p=>{
-let c=p.categoria||"General";
-if(!cats.includes(c)) cats.push(c);
-});
-filtros.innerHTML="";
-cats.forEach(c=>{
-filtros.innerHTML+=`<div class="filtroBtn ${c===categoriaActiva?'active':''}" onclick="filtrarCategoria('${c}')">${c}</div>`;
-});
-}
-
-window.filtrarCategoria=(cat)=>{
-categoriaActiva=cat;
-crearFiltros();
-if(cat==="Todas") mostrar(productos);
-else mostrar(productos.filter(p=>p.categoria===cat));
-}
 
 function mostrar(listaMostrar){
 lista.innerHTML="";
 let grupos={};
 
 listaMostrar.forEach(p=>{
-let cat=p.categoria||"General";
-if(!grupos[cat]) grupos[cat]=[];
-grupos[cat].push(p);
+let c=p.categoria||"General";
+if(!grupos[c])grupos[c]=[];
+grupos[c].push(p);
 });
 
 Object.keys(grupos).forEach(cat=>{
 lista.innerHTML+=`<div class="categoriaTitulo">📦 ${cat}</div><div class="contenedor">`;
 
 grupos[cat].forEach(p=>{
-let i=productos.findIndex(x=>x.id===p.id);
-
-let boton=p.stock<=0
-? `<button class="agotado">AGOTADO</button>`
-: `<button class="add" onclick="agregarCarrito(${i})">Agregar</button>`;
-
 lista.innerHTML+=`
 <div class="producto">
-<img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
+<img src="${p.imagen}">
 <div class="info">
 <b>${p.nombre}</b>
-<p class="precio">$${p.precio}</p>
+<p>$${p.precio}</p>
 <p>${p.descripcion||""}</p>
-<p>Stock: ${p.stock}</p>
 
-${boton}
-<button class="wa" onclick="whatsapp(${i})">WhatsApp</button>
+<button class="eliminar" onclick="eliminarProducto('${p.id}')">Eliminar</button>
 
 </div>
 </div>`;
 });
 
-lista.innerHTML+=`</div>`;
+lista.innerHTML+="</div>";
 });
 }
 
-window.verImagen=(url)=>{modal.style.display="flex";imgModal.src=url;}
+/* 🔥 RESEÑAS FUNCIONANDO */
+window.agregarReseña=async()=>{
+await addDoc(collection(db,"reseñas"),{
+nombre:nombreReseña.value,
+texto:textoReseña.value
+});
+}
+
+onSnapshot(collection(db,"reseñas"),snap=>{
+listaReseñas.innerHTML="";
+snap.forEach(d=>{
+let r=d.data();
+listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
+});
+});
+
 window.cerrarModal=()=>modal.style.display="none";
 
-/* (RESTO DE TU CÓDIGO SIN CAMBIOS) */
-
 </script>
-
 </body>
-</html>
+</html> 
