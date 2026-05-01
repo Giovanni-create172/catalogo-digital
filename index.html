@@ -11,28 +11,13 @@ header{background:#0f172a;color:white;text-align:center;padding:15px;font-size:2
 
 #buscador{width:95%;margin:10px auto;display:block;padding:12px;border-radius:12px;border:1px solid #ccc;font-size:16px;}
 
-/* 🔥 FILTROS */
-#filtros{
-display:flex;
-gap:8px;
-overflow:auto;
-padding:10px;
-}
-.filtroBtn{
-padding:8px 12px;
-background:#e2e8f0;
-border-radius:20px;
-cursor:pointer;
-white-space:nowrap;
-}
-.filtroBtn.active{
-background:black;
-color:white;
-}
-
 .contenedor{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px;padding:15px;}
 
-.categoriaTitulo{padding:10px;font-weight:bold;font-size:18px;}
+.categoriaTitulo{
+padding:10px;
+font-weight:bold;
+font-size:18px;
+}
 
 .producto{background:white;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
 .producto img{width:100%;height:200px;object-fit:cover;cursor:pointer;}
@@ -70,9 +55,6 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 
 <input id="buscador" placeholder="Buscar productos..." onkeyup="filtrar()">
 
-<!-- 🔥 FILTROS -->
-<div id="filtros"></div>
-
 <div id="admin">
 <h3>Agregar producto</h3>
 <input id="nombre" placeholder="Nombre">
@@ -80,7 +62,7 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 <input id="imagen" placeholder="URL imagen">
 <input id="descripcion" placeholder="Descripción">
 <input id="stock" placeholder="Stock">
-<input id="categoria" placeholder="Categoría">
+<input id="categoria" placeholder="Categoría (Ej: Ropa, Zapatos)">
 <button onclick="agregar()">Agregar</button>
 </div>
 
@@ -123,10 +105,12 @@ const db = getFirestore(app);
 
 let productos = [];
 let carrito = JSON.parse(localStorage.getItem("carrito")) || [];
-let categoriaActiva = "Todas";
 
+/* ADMIN */
 let esAdmin = new URLSearchParams(location.search).get("admin")==="1234";
-if(esAdmin) admin.style.display="block";
+if(esAdmin){
+document.getElementById("admin").style.display="block";
+}
 
 /* AGREGAR */
 window.agregar = async ()=>{
@@ -148,63 +132,48 @@ await deleteDoc(doc(db,"productos",id));
 
 /* CARGAR */
 onSnapshot(collection(db,"productos"),(snap)=>{
-productos=[];
-snap.forEach(docu=>productos.push({id:docu.id,...docu.data()}));
-
-crearFiltros();
+productos = [];
+snap.forEach(docu=>{
+productos.push({id:docu.id,...docu.data()});
+});
 mostrar(productos);
 renderCarrito();
 });
 
-/* 🔥 CREAR BOTONES FILTRO */
-function crearFiltros(){
-let cats = ["Todas"];
-productos.forEach(p=>{
-let c = p.categoria || "General";
-if(!cats.includes(c)) cats.push(c);
-});
-
-filtros.innerHTML="";
-cats.forEach(c=>{
-filtros.innerHTML += `<div class="filtroBtn ${c===categoriaActiva?'active':''}" onclick="filtrarCategoria('${c}')">${c}</div>`;
-});
-}
-
-/* 🔥 FILTRAR POR CATEGORIA */
-window.filtrarCategoria = (cat)=>{
-categoriaActiva = cat;
-crearFiltros();
-
-if(cat==="Todas") mostrar(productos);
-else mostrar(productos.filter(p=>p.categoria===cat));
-}
-
-/* MOSTRAR */
+/* MOSTRAR POR CATEGORIAS */
 function mostrar(listaMostrar){
-lista.innerHTML="";
 
+const cont = document.getElementById("lista");
+cont.innerHTML = "";
+
+/* agrupar */
 let grupos = {};
+
 listaMostrar.forEach(p=>{
 let cat = p.categoria || "General";
 if(!grupos[cat]) grupos[cat]=[];
 grupos[cat].push(p);
 });
 
+/* pintar */
 Object.keys(grupos).forEach(cat=>{
-lista.innerHTML += `<div class="categoriaTitulo">📦 ${cat}</div><div class="contenedor">`;
 
-grupos[cat].forEach(p=>{
-let i = productos.findIndex(x=>x.id===p.id);
+cont.innerHTML += `<div class="categoriaTitulo">📦 ${cat}</div>`;
+cont.innerHTML += `<div class="contenedor">`;
+
+grupos[cat].forEach((p,i)=>{
+
+let indexReal = productos.findIndex(x=>x.id===p.id);
 
 let boton = p.stock<=0
 ? `<button class="agotado">AGOTADO</button>`
-: `<button class="add" onclick="agregarCarrito(${i})">Agregar</button>`;
+: `<button class="add" onclick="agregarCarrito(${indexReal})">Agregar</button>`;
 
-let eliminarBtn = esAdmin
+let botonEliminar = esAdmin
 ? `<button class="eliminar" onclick="eliminarProducto('${p.id}')">Eliminar</button>`
 : "";
 
-lista.innerHTML += `
+cont.innerHTML += `
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
 <div class="info">
@@ -214,15 +183,16 @@ lista.innerHTML += `
 <p>Stock: ${p.stock}</p>
 
 ${boton}
-<button class="wa" onclick="whatsapp(${i})">WhatsApp</button>
-${eliminarBtn}
+<button class="wa" onclick="whatsapp(${indexReal})">WhatsApp</button>
+${botonEliminar}
 
 </div>
 </div>`;
 });
 
-lista.innerHTML += `</div>`;
+cont.innerHTML += `</div>`;
 });
+
 }
 
 /* BUSCAR */
@@ -236,60 +206,129 @@ let filtrados = productos.filter(p =>
 mostrar(filtrados);
 }
 
-/* resto igual (carrito, whatsapp, pago, reseñas) */
-
-window.verImagen = (url)=>{modal.style.display="flex";imgModal.src=url;}
+/* IMAGEN */
+window.verImagen = (url)=>{
+modal.style.display="flex";
+imgModal.src = url;
+}
 window.cerrarModal = ()=>modal.style.display="none";
 
+/* CARRITO (igual que antes) */
 window.agregarCarrito = (i)=>{
-let p=productos[i]; if(p.stock<=0) return;
-let e=carrito.find(x=>x.id===p.id);
-if(e){ if(e.cantidad<p.stock) e.cantidad++; else return alert("Sin stock"); }
-else carrito.push({...p,cantidad:1});
-guardarCarrito(); renderCarrito();
+let p = productos[i];
+if(p.stock<=0) return;
+
+let existe = carrito.find(x=>x.id===p.id);
+
+if(existe){
+if(existe.cantidad < p.stock) existe.cantidad++;
+else return alert("Sin stock");
+}else{
+carrito.push({...p,cantidad:1});
+}
+
+guardarCarrito();
+renderCarrito();
 }
 
 function renderCarrito(){
-let t=0; items.innerHTML="";
+let items = document.getElementById("items");
+let total = 0;
+items.innerHTML = "";
+
 carrito.forEach((p,i)=>{
-t+=p.precio*p.cantidad;
-items.innerHTML+=`${p.nombre} x${p.cantidad}
+total += p.precio * p.cantidad;
+
+items.innerHTML += `
+<div>
+${p.nombre} x${p.cantidad}
 <button onclick="cambiar(${i},-1)">-</button>
 <button onclick="cambiar(${i},1)">+</button>
-<button onclick="eliminar(${i})">X</button>`;
+<button onclick="eliminar(${i})">X</button>
+</div>`;
 });
-total.innerText="Total: $"+t;
+
+document.getElementById("total").innerText = "Total: $" + total;
 }
 
-function guardarCarrito(){localStorage.setItem("carrito",JSON.stringify(carrito));}
-
-window.cambiar=(i,v)=>{let p=carrito[i]; if(p.cantidad+v<=0)return;
-if(p.cantidad+v>p.stock)return alert("Stock máximo");
-p.cantidad+=v;guardarCarrito();renderCarrito();}
-
-window.eliminar=i=>{carrito.splice(i,1);guardarCarrito();renderCarrito();}
-window.toggleCarrito=()=>carrito.classList.toggle("active");
-
-window.whatsapp=i=>{
-let p=productos[i];
-window.open("https://wa.me/573187446036?text="+encodeURIComponent(`Hola quiero ${p.nombre}`));
+function guardarCarrito(){
+localStorage.setItem("carrito",JSON.stringify(carrito));
 }
 
-window.pagar=async()=>{
-if(!carrito.length)return alert("Carrito vacío");
-await addDoc(collection(db,"ventas"),{fecha:new Date().toLocaleString()});
-carrito=[];guardarCarrito();renderCarrito();
+window.cambiar = (i,val)=>{
+let p = carrito[i];
+if(p.cantidad+val<=0) return;
+if(p.cantidad+val>p.stock) return alert("Stock máximo");
+p.cantidad+=val;
+guardarCarrito();
+renderCarrito();
 }
 
-window.agregarReseña=async()=>{
-await addDoc(collection(db,"reseñas"),{nombre:nombreReseña.value,texto:textoReseña.value});
+window.eliminar = (i)=>{
+carrito.splice(i,1);
+guardarCarrito();
+renderCarrito();
 }
 
-onSnapshot(collection(db,"reseñas"),s=>{
+window.toggleCarrito = ()=>{
+document.getElementById("carrito").classList.toggle("active");
+}
+
+/* WHATSAPP */
+window.whatsapp = (i)=>{
+let p = productos[i];
+let msg = `Hola 👋\nQuiero este producto:\n\n🛍 ${p.nombre}\n💰 $${p.precio}`;
+window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
+}
+
+/* PAGAR */
+window.pagar = async ()=>{
+if(carrito.length===0) return alert("Carrito vacío");
+
+let total = document.getElementById("total").innerText;
+
+let msg = "Hola 👋 quiero comprar:\n\n";
+carrito.forEach(p=>{
+msg += `🛍 ${p.nombre} x${p.cantidad}\n`;
+});
+msg += "\n"+total+"\n\nPago por Nequi: 3187446036";
+
+await addDoc(collection(db,"ventas"),{
+productos:carrito.map(p=>({nombre:p.nombre,cantidad:p.cantidad})),
+total:parseFloat(total.replace("Total: $","")),
+fecha:new Date().toLocaleString()
+});
+
+for(let p of carrito){
+await updateDoc(doc(db,"productos",p.id),{
+stock: p.stock - p.cantidad
+});
+}
+
+window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
+
+carrito=[];
+guardarCarrito();
+renderCarrito();
+}
+
+/* RESEÑAS */
+window.agregarReseña = async ()=>{
+await addDoc(collection(db,"reseñas"),{
+nombre: nombreReseña.value,
+texto: textoReseña.value
+});
+}
+
+onSnapshot(collection(db,"reseñas"),(snap)=>{
 listaReseñas.innerHTML="";
-s.forEach(d=>{let r=d.data();listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`});
+snap.forEach(doc=>{
+let r = doc.data();
+listaReseñas.innerHTML += `<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
+});
 });
 
 </script>
+
 </body>
 </html>
