@@ -100,6 +100,14 @@ border-radius:8px;
 .ig{background:#e1306c;}
 .waBtn{background:#25d366;}
 .tk{background:black;}
+ #contadorCarrito{
+background:red;
+color:white;
+border-radius:50%;
+padding:2px 6px;
+font-size:12px;
+margin-left:5px;
+} 
 </style>
 </head>
 <div id="noti"></div>
@@ -125,8 +133,9 @@ border-radius:8px;
 <button onclick="agregar()">Agregar</button>
 </div>
 
-<div id="carritoBtn" onclick="toggleCarrito()">🛒</div>
-
+<div id="carritoBtn" onclick="toggleCarrito()">
+🛒 <span id="contadorCarrito">0</span>
+</div>
 <div id="carrito">
 <button onclick="toggleCarrito()">Cerrar</button>
 <div id="items"></div>
@@ -302,6 +311,8 @@ items.innerHTML+=`${p.nombre} x${p.cantidad}
 <button onclick="eliminar(${i})">X</button>`;
 });
 document.getElementById("total").innerText="Total: $"+total;
+let totalCantidad = carrito.reduce((acc,p)=>acc+p.cantidad,0);
+document.getElementById("contadorCarrito").innerText = totalCantidad;  
 }
 
 function guardarCarrito(){localStorage.setItem("carrito",JSON.stringify(carrito));}
