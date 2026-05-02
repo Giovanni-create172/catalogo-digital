@@ -210,6 +210,9 @@ cont.innerHTML+=`
 <p class="precio">$${p.precio}</p>
 <p>${p.descripcion||""}</p>
 <p>Stock: ${p.stock}</p>
+<p style="color:#2563eb;font-size:13px;">
+👀 ${Math.floor(Math.random()*10)+1} personas viendo
+</p>
 ${boton}
 <button class="wa" onclick="whatsapp(${i})">WhatsApp</button>
 ${eliminarBtn}
