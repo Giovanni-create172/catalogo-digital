@@ -6,6 +6,24 @@
 <title>Encanto Ventas Pasto</title>
 
 <style>
+#noti{
+position:fixed;
+bottom:20px;
+left:20px;
+background:white;
+padding:10px 15px;
+border-radius:12px;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+font-size:14px;
+display:none;
+z-index:9999;
+animation:fadeIn .5s;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0);}
+}  
 body{margin:0;font-family:'Segoe UI';background:#f1f5f9;overflow-x:hidden;}
 header{
 background:#0f172a;color:white;text-align:center;
@@ -58,7 +76,7 @@ button{width:100%;margin-top:5px;padding:8px;border:none;border-radius:8px;curso
 .tk{background:black;}
 </style>
 </head>
-
+<div id="noti"></div>
 <body>
 
 <header>
@@ -320,7 +338,25 @@ let r=doc.data();
 listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
 });
 });
+const nombres = ["Ana","Carlos","Luis","María","Andrés","Sofía","Juan","Camila"];
 
+function mostrarNotificacion(){
+
+let nombre = nombres[Math.floor(Math.random()*nombres.length)];
+let minutos = Math.floor(Math.random()*10)+1;
+
+let texto = `🛍 ${nombre} compró hace ${minutos} min`;
+
+let box = document.getElementById("noti");
+box.innerText = texto;
+box.style.display = "block";
+
+setTimeout(()=>{
+box.style.display="none";
+},4000);
+}
+
+setInterval(mostrarNotificacion, 8000);
 </script>
 </body>
 </html> 
