@@ -6,6 +6,38 @@
 <title>Encanto Ventas Pasto</title>
 
 <style>
+.itemCarrito{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#f8fafc;
+padding:10px;
+margin-bottom:10px;
+border-radius:10px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.infoCarrito b{
+font-size:14px;
+}
+
+.infoCarrito p{
+margin:0;
+font-size:13px;
+color:#555;
+}
+
+.accionesCarrito button{
+margin-left:5px;
+padding:5px 8px;
+border-radius:6px;
+border:none;
+cursor:pointer;
+}
+
+.accionesCarrito button:nth-child(1){background:#e2e8f0;}
+.accionesCarrito button:nth-child(2){background:#38bdf8;color:white;}
+.accionesCarrito button:nth-child(3){background:#ef4444;color:white;} 
 #noti{
 position:fixed;
 bottom:20px;
@@ -305,10 +337,19 @@ let items=document.getElementById("items");
 let total=0; items.innerHTML="";
 carrito.forEach((p,i)=>{
 total+=p.precio*p.cantidad;
-items.innerHTML+=`${p.nombre} x${p.cantidad}
-<button onclick="cambiar(${i},-1)">-</button>
-<button onclick="cambiar(${i},1)">+</button>
-<button onclick="eliminar(${i})">X</button>`;
+items.innerHTML += `
+<div class="itemCarrito">
+  <div class="infoCarrito">
+    <b>${p.nombre}</b>
+    <p>$${p.precio} x ${p.cantidad}</p>
+  </div>
+
+  <div class="accionesCarrito">
+    <button onclick="cambiar(${i},-1)">➖</button>
+    <button onclick="cambiar(${i},1)">➕</button>
+    <button onclick="eliminar(${i})">❌</button>
+  </div>
+</div>`;
 });
 document.getElementById("total").innerText="Total: $"+total;
 let totalCantidad = carrito.reduce((acc,p)=>acc+p.cantidad,0);
