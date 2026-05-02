@@ -265,9 +265,19 @@ p.cantidad+=v;guardarCarrito();renderCarrito();
 window.eliminar=i=>{carrito.splice(i,1);guardarCarrito();renderCarrito();}
 window.toggleCarrito=()=>document.getElementById("carrito").classList.toggle("active");
 
-window.whatsapp=i=>{
-let p=productos[i];
-let msg=`Hola 👋\nQuiero este producto:\n\n🛍 ${p.nombre}\n💰 $${p.precio}`;
+window.whatsapp = (i)=>{
+let p = productos[i];
+
+let msg = `Hola 👋
+Quiero este producto:
+
+🛍 ${p.nombre}
+💰 $${p.precio}
+
+🖼 Imagen:
+${p.imagen}
+`;
+
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
 }
 
