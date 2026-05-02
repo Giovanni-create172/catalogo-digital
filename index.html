@@ -268,6 +268,8 @@ window.toggleCarrito=()=>document.getElementById("carrito").classList.toggle("ac
 window.whatsapp = (i)=>{
 let p = productos[i];
 
+let imagen = p.imagen ? p.imagen : "No disponible";
+
 let msg = `Hola 👋
 Quiero este producto:
 
@@ -275,7 +277,7 @@ Quiero este producto:
 💰 $${p.precio}
 
 🖼 Imagen:
-${p.imagen}
+${imagen}
 `;
 
 window.open("https://wa.me/573187446036?text="+encodeURIComponent(msg));
