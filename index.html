@@ -391,7 +391,14 @@ if(carrito.length===0)return alert("Carrito vacío");
 let total=document.getElementById("total").innerText;
 
 let msg="Hola 👋 quiero comprar:\n\n";
-carrito.forEach(p=>msg+=`🛍 ${p.nombre} x${p.cantidad}\n`);
+carrito.forEach(p=>{
+msg += `🛍 ${p.nombre} x${p.cantidad}
+💰 $${p.precio}
+
+🖼 ${p.imagen}
+
+`;
+});
 msg+="\n"+total+"\n\nPago por Nequi: 3187446036";
 
 await addDoc(collection(db,"ventas"),{
