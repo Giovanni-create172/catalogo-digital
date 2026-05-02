@@ -345,7 +345,9 @@ function mostrarNotificacion(){
 let nombre = nombres[Math.floor(Math.random()*nombres.length)];
 let minutos = Math.floor(Math.random()*10)+1;
 
-let texto = `🛍 ${nombre} compró hace ${minutos} min`;
+let producto = productos[Math.floor(Math.random()*productos.length)];
+
+let texto = `🛍 ${nombre} compró ${producto.nombre} hace ${minutos} min`;
 
 let box = document.getElementById("noti");
 box.innerText = texto;
