@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -288,12 +288,9 @@ let boton=p.stock<=0
 ? `<button class="agotado">AGOTADO</button>`
 : `<button class="add" onclick="agregarCarrito(${i})">Agregar</button>`;
 
-let botonEliminar = esAdmin
-? `
-<button class="eliminar" onclick="eliminarProducto('${p.id}')">Eliminar</button>
-<button onclick="editarImagen('${p.id}','${p.imagen}')">✏️ Imagen</button>
-`
-: "";
+let eliminarBtn=esAdmin
+? `<button class="eliminar" onclick="eliminarProducto('${p.id}')">Eliminar</button>`:"";
+
 cont.innerHTML+=`
 <div class="producto">
 <img src="${p.imagen}" onclick="verImagen('${p.imagen}')">
@@ -430,18 +427,6 @@ let r=doc.data();
 listaReseñas.innerHTML+=`<div class="res"><b>${r.nombre}</b><br>${r.texto}</div>`;
 });
 });
- window.editarImagen = async (id, actual)=>{
-
-let nueva = prompt("Nueva URL de imagen:", actual);
-
-if(!nueva) return;
-
-await updateDoc(doc(db,"productos",id),{
-imagen:nueva
-});
-
-alert("Imagen actualizada ✅");
-}
 const nombres = ["Ana","Carlos","Luis","María","Andrés","Sofía","Juan","Camila"];
 
 function mostrarNotificacion(){
@@ -465,4 +450,4 @@ box.style.display="none";
 setInterval(mostrarNotificacion, 8000);
 </script>
 </body>
-</html> 
+</html>
