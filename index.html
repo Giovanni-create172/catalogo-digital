@@ -161,7 +161,13 @@ margin-left:5px;
 <input id="imagen" placeholder="URL imagen">
 <input id="descripcion" placeholder="Descripción">
 <input id="stock" placeholder="Stock">
-<input id="categoria" placeholder="Categoría">
+<select id="categoria">
+  <option value="Ropa">Ropa</option>
+  <option value="Zapatos">Zapatos</option>
+  <option value="Accesorios">Accesorios</option>
+  <option value="Tecnología">Tecnología</option>
+  <option value="Otros">Otros</option>
+</select>
 <button onclick="agregar()">Agregar</button>
 </div>
 
@@ -231,7 +237,7 @@ precio:Number(precio.value),
 imagen:imagen.value,
 descripcion:descripcion.value,
 stock:Number(stock.value),
-categoria:categoria.value||"General"
+categoria: categoria.value.trim()
 });
 }
 
@@ -250,10 +256,14 @@ renderCarrito();
 
 function crearFiltros(){
 let cats=["Todas"];
+
 productos.forEach(p=>{
-let c=p.categoria||"General";
+let c = (p.categoria || "General").trim();
 if(!cats.includes(c)) cats.push(c);
 });
+
+/* 👇 NUEVO: ordenar */
+cats = ["Todas", ...cats.slice(1).sort()];
 filtros.innerHTML="";
 cats.forEach(c=>{
 filtros.innerHTML+=`<div class="filtroBtn ${c===categoriaActiva?'active':''}" onclick="filtrarCategoria('${c}')">${c}</div>`;
